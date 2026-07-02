@@ -9,9 +9,9 @@ export type UiToMain =
   | { type: "SAVE_KEY"; key: string } // persist the translation key in clientStorage
   | { type: "PREPARE"; language: Language } // extract unique source strings from selection
   | { type: "GENERATE"; language: Language; translations: Record<string, string> }
-  | { type: "PREVIEW_ENTER" } // enter clone-swap preview (does NOT move the viewport)
+  | { type: "PREVIEW_ENTER"; language: Language } // clone-swap preview for one language
   | { type: "PREVIEW_EXIT" } // leave preview, restore originals
-  | { type: "EXPORT" } // permanently create localized copies
+  | { type: "EXPORT"; language: Language } // permanently create localized copies for one language
   | { type: "SELECT_NODE"; nodeId: string }
   | { type: "REVEAL"; checkId: CheckId; nodeIds: string[] }
   | { type: "EXIT_REVEAL" }
@@ -28,5 +28,5 @@ export type MainToUi =
   | { type: "REVEAL_STATE"; active: boolean; count: number; checkId: CheckId | null }
   | { type: "SELECT_RESULT"; nodeId: string; found: boolean }
   | { type: "GO_TO_COMPONENT_RESULT"; found: boolean }
-  | { type: "PREVIEW_STATE"; active: boolean }
-  | { type: "EXPORT_DONE"; count: number };
+  | { type: "PREVIEW_STATE"; active: boolean; language: Language | null }
+  | { type: "EXPORT_DONE"; count: number; language: Language };

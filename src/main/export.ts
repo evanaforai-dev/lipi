@@ -35,6 +35,7 @@ export async function exportLocalized(
       clone.x = o.x;
       clone.y = o.y + gap;
     }
+    clone.name = `${o.name} (${LANGUAGE_LABEL[language]})`; // e.g. "Home (Tamil)"
     clones.push(clone);
   }
   await applyTranslations(clones, translations, language);

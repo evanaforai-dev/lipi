@@ -32,11 +32,10 @@ import { createPressureIssues, dedupeIssues, printPressure } from "./delta/adapt
 
 const KEY_STORAGE = "gtranslate_key";
 let genCounter = 0;
-// Verify Mode keeps only the previous scan in memory (never persisted).
-let previousReport: Report | null = null;
-// Last generation's inputs — reused by Preview and Export.
-let lastTranslations: Record<string, string> = {};
-let lastLanguage: Language = "hi";
+// Verify Mode keeps the previous scan PER language (never persisted) so diffs never cross langs.
+const previousReportByLang: Partial<Record<Language, Report>> = {};
+// Per-language translations + the shared selection, reused by Preview and Export.
+const translationsByLang: Partial<Record<Language, Record<string, string>>> = {};
 let lastRootIds: string[] = [];
 
 // Crash recovery: sweep any leftover preview artifacts before doing anything else.
@@ -137,22 +136,21 @@ figma.ui.onmessage = async (msg: UiToMain) => {
           rootIds,
         });
 
-        // Verify Mode: diff against the previous run. Original node ids are stable across
-        // regenerations, so the diff is meaningful.
-        if (previousReport) {
-          const { diff, resolvedIssues } = diffReports(previousReport, report);
+        // Verify Mode: diff against the previous run of THIS language (node ids are stable).
+        const prev = previousReportByLang[msg.language];
+        if (prev) {
+          const { diff, resolvedIssues } = diffReports(prev, report);
           report.diff = diff;
           report.resolvedIssues = resolvedIssues;
         } else {
           for (const issue of report.issues) issue.status = "unchanged";
         }
-        previousReport = report;
+        previousReportByLang[msg.language] = report;
 
-        // Remember inputs so Preview / Export can reuse them without re-translating.
-        lastTranslations = msg.translations;
-        lastLanguage = msg.language;
+        // Remember this language's translations + the shared selection so Preview / Export can
+        // reuse them without re-translating. Preview is configured per language on PREVIEW_ENTER.
+        translationsByLang[msg.language] = msg.translations;
         lastRootIds = roots.map((r) => r.id);
-        configurePreview(msg.translations, msg.language);
 
         post({
           type: "GENERATE_RESULT",
@@ -175,21 +173,28 @@ figma.ui.onmessage = async (msg: UiToMain) => {
     }
 
     case "PREVIEW_ENTER": {
-      // Enter Preview: localize the previewed screens IN PLACE (clone-swap over hidden
-      // originals) so the designer's existing screens simply become Hindi where they are.
-      // The viewport is NOT moved and no issue is auto-revealed — navigation happens only
-      // when the user clicks Reveal.
+      // Enter/switch Preview for ONE language: clone-swap the previewed screens IN PLACE over
+      // the hidden originals so they simply become that language where they are. Switching
+      // languages exits the current preview first, then re-enters with the new translations —
+      // reusing the same preview implementation. No viewport move, no auto-reveal.
+      const translations = translationsByLang[msg.language];
+      if (!translations) {
+        post({ type: "PREVIEW_STATE", active: false, language: null });
+        break;
+      }
       clearReveal();
+      if (isPreviewActive()) exitPreview();
+      configurePreview(translations, msg.language);
       enterPreview();
       for (const id of lastRootIds) await previewNode(id);
-      post({ type: "PREVIEW_STATE", active: true });
+      post({ type: "PREVIEW_STATE", active: true, language: msg.language });
       break;
     }
 
     case "PREVIEW_EXIT": {
       clearReveal();
       exitPreview();
-      post({ type: "PREVIEW_STATE", active: false });
+      post({ type: "PREVIEW_STATE", active: false, language: null });
       break;
     }
 
@@ -198,10 +203,11 @@ figma.ui.onmessage = async (msg: UiToMain) => {
       // clones would inherit the hidden originals' visibility and land as an invisible section.
       if (isPreviewActive()) {
         exitPreview();
-        post({ type: "PREVIEW_STATE", active: false });
+        post({ type: "PREVIEW_STATE", active: false, language: null });
       }
-      const count = await exportLocalized(lastRootIds, lastTranslations, lastLanguage);
-      post({ type: "EXPORT_DONE", count });
+      const translations = translationsByLang[msg.language] ?? {};
+      const count = await exportLocalized(lastRootIds, translations, msg.language);
+      post({ type: "EXPORT_DONE", count, language: msg.language });
       break;
     }
 

@@ -1,10 +1,10 @@
-// Translation-stage vocabulary shared by both contexts. V1: Hindi only, but every
-// type is a union so Tamil/Bengali plug in later without touching call sites.
+// Translation-stage vocabulary shared by both contexts. Hindi + Tamil are supported; every
+// type is a union so more scripts plug in later without touching call sites.
 
-export type Language = "hi";
+export type Language = "hi" | "ta";
 
-export const LANGUAGE_NAME: Record<Language, string> = { hi: "हिन्दी" };
-export const LANGUAGE_LABEL: Record<Language, string> = { hi: "Hindi" };
+export const LANGUAGE_NAME: Record<Language, string> = { hi: "हिन्दी", ta: "தமிழ்" };
+export const LANGUAGE_LABEL: Record<Language, string> = { hi: "Hindi", ta: "Tamil" };
 
 // The visible generation stages. The user never sees "pipeline" — just these steps.
 export type Stage =

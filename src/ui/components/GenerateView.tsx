@@ -2,57 +2,54 @@ import { useState } from "react";
 import type { Language } from "../../shared/translate";
 import { PROVIDERS, type ProviderId } from "../translate/provider";
 
-// Entry experience: choose a language, then generate & test. No mention of pipelines,
-// providers, or engines — the user just asks for a Hindi version and what to fix.
-const LANGS: { id: Language | "ta" | "bn"; label: string; enabled: boolean }[] = [
-  { id: "hi", label: "हिन्दी", enabled: true },
-  { id: "ta", label: "தமிழ்", enabled: false },
-  { id: "bn", label: "বাংলা", enabled: false },
+// Entry experience: choose one or more languages, then generate & test. No mention of
+// pipelines, providers, or engines — the user just asks for localized versions and what to fix.
+const LANGS: { id: Language; label: string }[] = [
+  { id: "hi", label: "हिन्दी" },
+  { id: "ta", label: "தமிழ்" },
 ];
 
 export function GenerateView({
-  language,
+  selectedLangs,
   providerId,
   keyRequired,
   hasKey,
   error,
+  onToggleLang,
   onSelectProvider,
   onSaveKey,
   onGenerate,
 }: {
-  language: Language;
+  selectedLangs: Language[];
   providerId: ProviderId;
   keyRequired: boolean;
   hasKey: boolean;
   error: string | null;
+  onToggleLang: (id: Language) => void;
   onSelectProvider: (id: ProviderId) => void;
   onSaveKey: (key: string) => void;
   onGenerate: () => void;
 }) {
   const [keyDraft, setKeyDraft] = useState("");
-  const blocked = keyRequired && !hasKey;
+  const blocked = (keyRequired && !hasKey) || selectedLangs.length === 0;
 
   return (
     <div style={styles.root}>
       <h1 style={styles.title}>Localization Pressure Test</h1>
-      <p style={styles.subtitle}>Generate a localized version of your screens and see what to fix.</p>
+      <p style={styles.subtitle}>Generate localized versions of your screens and see what to fix.</p>
 
-      <p style={styles.label}>Choose language</p>
+      <p style={styles.label}>Choose languages</p>
       <div style={styles.langs}>
         {LANGS.map((l) => {
-          const selected = l.id === language;
+          const selected = selectedLangs.includes(l.id);
           return (
             <div
               key={l.id}
-              style={{
-                ...styles.lang,
-                ...(selected ? styles.langOn : null),
-                ...(l.enabled ? null : styles.langOff),
-              }}
+              style={{ ...styles.lang, ...(selected ? styles.langOn : null) }}
+              onClick={() => onToggleLang(l.id)}
             >
-              <span style={styles.radio}>{selected ? "●" : "○"}</span>
+              <span style={styles.radio}>{selected ? "☑" : "☐"}</span>
               {l.label}
-              {!l.enabled && <span style={styles.soon}>soon</span>}
             </div>
           );
         })}

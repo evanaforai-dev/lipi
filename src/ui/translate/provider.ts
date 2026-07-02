@@ -66,8 +66,18 @@ const DEMO_DICT: Record<string, string> = {
   "buy now": "अभी खरीदें",
 };
 
-const CONS = "कखगघचजटडतथदनपफबभमयरलवशसह".split("");
-const MATRA = ["", "ा", "ि", "ी", "ु", "ू", "े", "ो", "ं"];
+// Per-language syllable sets so demo output renders in the RIGHT script (Devanagari for
+// Hindi, Tamil for Tamil) — otherwise the delta engine would measure the wrong glyphs.
+const SCRIPTS: Record<Language, { cons: string[]; matra: string[] }> = {
+  hi: {
+    cons: "कखगघचजटडतथदनपफबभमयरलवशसह".split(""),
+    matra: ["", "ा", "ि", "ी", "ु", "ू", "े", "ो", "ं"],
+  },
+  ta: {
+    cons: "கஙசஞடணதநபமயரலவழளறன".split(""),
+    matra: ["", "ா", "ி", "ீ", "ு", "ூ", "ெ", "ே", "ொ", "ோ"],
+  },
+};
 
 function seedOf(s: string): number {
   let h = 2166136261;
@@ -78,33 +88,36 @@ function seedOf(s: string): number {
   return h >>> 0 || 1;
 }
 
-function devWord(length: number, seed: number): string {
+function fakeWord(length: number, seed: number, lang: Language): string {
+  const { cons, matra } = SCRIPTS[lang];
   let s = seed;
   const next = () => (s = (Math.imul(s, 1103515245) + 12345) >>> 0);
   let out = "";
   const syllables = Math.max(1, Math.ceil(length / 2));
   for (let i = 0; i < syllables; i++) {
-    out += CONS[next() % CONS.length] + MATRA[next() % MATRA.length];
+    out += cons[next() % cons.length] + matra[next() % matra.length];
   }
   return out;
 }
 
-// Deterministic expansion: same source → same output, ~1.5× longer per word.
-function expand(source: string): string {
+// Deterministic expansion: same source → same output, ~1.5× longer per word, in `lang`'s script.
+function expand(source: string, lang: Language): string {
   const words = source.split(/\s+/).filter(Boolean);
   if (words.length === 0) return source;
   const base = seedOf(source);
-  return words.map((w, i) => devWord(Math.ceil(w.length * 1.5) + 2, base + i * 7919)).join(" ");
+  return words.map((w, i) => fakeWord(Math.ceil(w.length * 1.5) + 2, base + i * 7919, lang)).join(" ");
 }
 
 export const DEMO_PROVIDER: TranslationProvider = {
   id: "demo",
   label: "Demo",
   requiresKey: false,
-  async translate(strings) {
+  async translate(strings, language) {
     const map: Record<string, string> = {};
     for (const s of strings) {
-      map[s] = DEMO_DICT[s.trim().toLowerCase()] ?? expand(s);
+      // The curated dictionary is Hindi-only; every other language uses script-correct pseudo.
+      const known = language === "hi" ? DEMO_DICT[s.trim().toLowerCase()] : undefined;
+      map[s] = known ?? expand(s, language);
     }
     return { map, failed: 0 };
   },

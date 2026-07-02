@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { MainToUi } from "../shared/messages";
 import type { CheckId, Issue, Report } from "../shared/types";
 import type { GenMeta, Language, Stage } from "../shared/translate";
@@ -39,19 +39,32 @@ const allDone = (): Record<Stage, StageState> => {
 };
 
 export function App() {
-  const language: Language = "hi";
   const [phase, setPhase] = useState<Phase>("generate");
   // Demo is the default so the plugin runs immediately after cloning — no API key needed.
   const [providerId, setProviderId] = useState<ProviderId>("demo");
   const [key, setKey] = useState<string | null>(null);
   const [genError, setGenError] = useState<string | null>(null);
   const [stageStatus, setStageStatus] = useState<Record<Stage, StageState>>(emptyStages());
-  const [report, setReport] = useState<Report | null>(null);
-  const [meta, setMeta] = useState<GenMeta | null>(null);
-  const [previewActive, setPreviewActive] = useState(false);
+  // Multi-language: each selected language keeps its own report; activeLang is the one on view.
+  const [selectedLangs, setSelectedLangs] = useState<Language[]>(["hi"]);
+  const [reports, setReports] = useState<Partial<Record<Language, { report: Report; meta: GenMeta }>>>(
+    {},
+  );
+  const [activeLang, setActiveLang] = useState<Language | null>(null);
+  const [previewLang, setPreviewLang] = useState<Language | null>(null); // which language is previewed
   const [notice, setNotice] = useState<string | null>(null);
   // Review lens: screen-first (per-screen findings) vs system-level (root-cause / component fixes).
   const [reviewMode, setReviewMode] = useState<"screens" | "system">("screens");
+  // Languages still to run through the pipeline this analysis (order = selection order).
+  const genQueue = useRef<Language[]>([]);
+  const genStrings = useRef<string[]>([]);
+
+  // Derived from the active language — the rest of the UI reads these as before.
+  const active = activeLang ? reports[activeLang] : undefined;
+  const report = active?.report ?? null;
+  const meta = active?.meta ?? null;
+  const previewActive = previewLang !== null;
+  const doneLangs = selectedLangs.filter((l) => reports[l]);
 
   // Advisor state (unchanged behavior).
   const [, setRevealState] = useState<RevealState>(NO_REVEAL);
@@ -68,22 +81,30 @@ export function App() {
         setPhase("generate");
         break;
       case "PREPARE_RESULT":
-        setStageStatus(stagesUpTo("translating"));
-        void runTranslation(msg.strings);
+        // Strings are language-agnostic (source English) — translate them per language below.
+        genStrings.current = msg.strings;
+        void runNextLanguage();
         break;
       case "STAGE":
         setStageStatus(stagesUpTo(msg.stage));
         break;
-      case "GENERATE_RESULT":
-        setStageStatus(allDone());
-        setReport(msg.report);
-        setMeta(msg.meta);
-        setPhase("advisor");
-        // Preview is the default: localize the screens in place as soon as analysis lands
-        // (no viewport move — the sandbox just clone-swaps over the hidden originals).
-        setPreviewActive(true);
-        send({ type: "PREVIEW_ENTER" });
+      case "GENERATE_RESULT": {
+        const lang = msg.meta.language;
+        setReports((prev) => ({ ...prev, [lang]: { report: msg.report, meta: msg.meta } }));
+        genQueue.current = genQueue.current.filter((l) => l !== lang);
+        if (genQueue.current.length > 0) {
+          // More languages to analyze — run the same pipeline again for the next one.
+          void runNextLanguage();
+        } else {
+          setStageStatus(allDone());
+          setPhase("advisor");
+          const first = selectedLangs[0];
+          setActiveLang(first);
+          setPreviewLang(first); // preview-as-default; PREVIEW_STATE confirms
+          send({ type: "PREVIEW_ENTER", language: first });
+        }
         break;
+      }
       case "GENERATE_ERROR":
         setGenError(msg.message);
         setPhase("generate");
@@ -101,11 +122,11 @@ export function App() {
         }
         break;
       case "PREVIEW_STATE":
-        setPreviewActive(msg.active);
+        setPreviewLang(msg.active ? msg.language : null);
         break;
       case "EXPORT_DONE":
         setNotice(
-          `Exported ${msg.count} localized screen${msg.count === 1 ? "" : "s"} to this page.`,
+          `Exported ${msg.count} screen${msg.count === 1 ? "" : "s"} (${LANGUAGE_LABEL[msg.language]}) to this page.`,
         );
         break;
     }
@@ -114,47 +135,71 @@ export function App() {
   // ── Generation flow ────────────────────────────────────────────────────────
   const saveKey = (k: string) => send({ type: "SAVE_KEY", key: k });
 
+  const toggleLang = (l: Language) =>
+    setSelectedLangs((prev) => (prev.includes(l) ? prev.filter((x) => x !== l) : [...prev, l]));
+
   const startGenerate = () => {
+    if (selectedLangs.length === 0) return;
     setGenError(null);
     setNavError(null);
-    setReport(null);
+    setReports({});
+    setActiveLang(null);
+    setPreviewLang(null);
+    genQueue.current = [...selectedLangs];
     setStageStatus(stagesUpTo("prepare"));
     setPhase("generating");
-    send({ type: "PREPARE", language });
+    send({ type: "PREPARE", language: selectedLangs[0] });
   };
 
-  const runTranslation = async (strings: string[]) => {
+  // Run the EXISTING pipeline once for the next queued language: translate, then GENERATE.
+  const runNextLanguage = async () => {
+    const lang = genQueue.current[0];
+    if (!lang) return;
     const provider = getProvider(providerId);
     if (provider.requiresKey && !key) {
       setGenError("Add a translation key first.");
       setPhase("generate");
       return;
     }
-    const { map } = await provider.translate(strings, language, key ?? "");
-    send({ type: "GENERATE", language, translations: map });
+    setStageStatus(stagesUpTo("translating"));
+    const { map } = await provider.translate(genStrings.current, lang, key ?? "");
+    send({ type: "GENERATE", language: lang, translations: map });
   };
 
-  // Entering preview arms the mode only — the canvas does not move until the user reveals.
   const enterPreview = () => {
+    if (!activeLang) return;
     setNotice(null);
-    send({ type: "PREVIEW_ENTER" });
+    send({ type: "PREVIEW_ENTER", language: activeLang });
   };
   const exitPreview = () => send({ type: "PREVIEW_EXIT" });
-  const exportLocalized = () => send({ type: "EXPORT" });
+  const exportLocalized = () => {
+    if (activeLang) send({ type: "EXPORT", language: activeLang });
+  };
+
+  // Switch the viewed language (its own report), and move the on-canvas preview with it.
+  const switchLanguage = (lang: Language) => {
+    if (lang === activeLang) return;
+    setActiveLang(lang);
+    setNavError(null);
+    setRevealingCauseId(null);
+    if (previewActive) send({ type: "PREVIEW_ENTER", language: lang });
+  };
 
   // In-app reset: return to the initial language screen without reopening the plugin. Restores
   // the canvas (exit preview / clear reveal) and clears all analysis + status UI state.
   const newAnalysis = () => {
     if (previewActive) send({ type: "PREVIEW_EXIT" });
     send({ type: "EXIT_REVEAL" });
-    setReport(null);
-    setMeta(null);
+    setReports({});
+    setActiveLang(null);
+    setPreviewLang(null);
+    setSelectedLangs(["hi"]); // clear language selection back to the fresh-open default
+    genQueue.current = [];
     setNotice(null);
     setNavError(null);
     setGenError(null);
     setRevealingCauseId(null);
     setRevealState(NO_REVEAL);
-    setPreviewActive(false);
     // reviewMode intentionally preserved — the toggle remembers the user's last-chosen lens.
     setStageStatus(emptyStages());
     setPhase("generate");
@@ -198,11 +243,12 @@ export function App() {
     return (
       <main style={styles.root}>
         <GenerateView
-          language={language}
+          selectedLangs={selectedLangs}
           providerId={providerId}
           keyRequired={getProvider(providerId).requiresKey}
           hasKey={!!key}
           error={genError}
+          onToggleLang={toggleLang}
           onSelectProvider={setProviderId}
           onSaveKey={saveKey}
           onGenerate={startGenerate}
@@ -248,9 +294,6 @@ export function App() {
             )}
           </div>
           <div style={styles.completeActions}>
-            <button style={styles.secondaryBtn} onClick={exportLocalized}>
-              Export Localized Screens
-            </button>
             {previewActive ? (
               <button style={styles.tertiaryBtn} onClick={exitPreview}>
                 Exit Preview
@@ -260,6 +303,9 @@ export function App() {
                 Preview
               </button>
             )}
+            <button style={styles.secondaryBtn} onClick={exportLocalized}>
+              Export Localized Screens
+            </button>
             <button style={styles.tertiaryBtn} onClick={newAnalysis} title="Reset and start over">
               New Analysis
             </button>
@@ -270,6 +316,20 @@ export function App() {
 
       <div style={styles.content}>
         {navError && <p style={styles.navError}>{navError}</p>}
+        {/* Results separated by language — each tab is that language's own analysis. */}
+        {doneLangs.length > 1 && (
+          <div style={styles.langTabs} role="tablist">
+            {doneLangs.map((l) => (
+              <button
+                key={l}
+                style={l === activeLang ? styles.langTabActive : styles.langTab}
+                onClick={() => switchLanguage(l)}
+              >
+                {LANGUAGE_LABEL[l]}
+              </button>
+            ))}
+          </div>
+        )}
         {report &&
           (report.summary.totalIssues === 0 ? (
             <p style={styles.clear}>✓ Translations fit. Nothing to fix.</p>
@@ -353,6 +413,33 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
   },
   content: { flex: 1, overflowY: "auto", padding: "10px 16px 20px" },
+  langTabs: {
+    display: "flex",
+    gap: 16,
+    marginBottom: 12,
+    borderBottom: "1px solid var(--figma-color-border, #ececec)",
+  },
+  langTab: {
+    fontSize: 12,
+    fontWeight: 600,
+    padding: "6px 2px",
+    border: "none",
+    borderBottom: "2px solid transparent",
+    background: "transparent",
+    color: "inherit",
+    opacity: 0.5,
+    cursor: "pointer",
+  },
+  langTabActive: {
+    fontSize: 12,
+    fontWeight: 600,
+    padding: "6px 2px",
+    border: "none",
+    borderBottom: "2px solid var(--figma-color-border-brand, #0d99ff)",
+    background: "transparent",
+    color: "inherit",
+    cursor: "pointer",
+  },
   results: { display: "flex", flexDirection: "column", gap: 16 },
   modeToggle: {
     display: "flex",

@@ -1,7 +1,7 @@
 import type { Language } from "../../shared/translate";
 
-// Fonts that can render Devanagari — kept as-is. Anything else gets the fallback so
-// the translated variant renders legibly (and layout can actually be measured).
+// Fonts that can render each script — kept as-is. Anything else gets the fallback so the
+// translated variant renders legibly (and layout can actually be measured).
 const SCRIPT_CAPABLE: Record<Language, Set<string>> = {
   hi: new Set([
     "Noto Sans Devanagari",
@@ -15,13 +15,27 @@ const SCRIPT_CAPABLE: Record<Language, Set<string>> = {
     "Kohinoor Devanagari",
     "Mangal",
   ]),
+  ta: new Set([
+    "Noto Sans Tamil",
+    "Noto Serif Tamil",
+    "Mukta Malar",
+    "Hind Madurai",
+    "Catamaran",
+    "Baloo Thambi 2",
+    "Tiro Tamil",
+    "Latha",
+  ]),
 };
 
 const FALLBACK_FONT: Record<Language, FontName> = {
   hi: { family: "Noto Sans Devanagari", style: "Regular" },
+  ta: { family: "Noto Sans Tamil", style: "Regular" },
 };
 
-const SCRIPT_RANGE: Record<Language, [number, number]> = { hi: [0x0900, 0x097f] };
+const SCRIPT_RANGE: Record<Language, [number, number]> = {
+  hi: [0x0900, 0x097f],
+  ta: [0x0b80, 0x0bff],
+};
 
 function firstFontName(node: TextNode): FontName {
   const f = node.fontName;
