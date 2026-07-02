@@ -1,0 +1,29 @@
+{
+  "name": "localization-pressure-test",
+  "version": "0.1.0",
+  "description": "Figma plugin to identify localization issues after translating UI into Indian languages.",
+  "license": "MIT",
+  "scripts": {
+    "build:main": "vite build --config vite.main.config.ts",
+    "build:ui": "vite build --config vite.config.ts",
+    "build": "npm run build:main && npm run build:ui",
+    "dev:main": "vite build --watch --config vite.main.config.ts",
+    "dev:ui": "vite build --watch --config vite.config.ts",
+    "dev": "npm-run-all --parallel dev:main dev:ui",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.100.2",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11",
+    "vite-plugin-singlefile": "^2.0.3"
+  }
+}

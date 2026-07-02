@@ -1,0 +1,11 @@
+{
+  "name": "Localization Pressure Test",
+  "id": "localization-pressure-test",
+  "api": "1.0.0",
+  "editorType": ["figma"],
+  "main": "dist/code.js",
+  "ui": "dist/index.html",
+  "networkAccess": {
+    "allowedDomains": ["https://translation.googleapis.com"]
+  }
+}
