@@ -1,16 +1,20 @@
 import { useEffect, useState } from "react";
-import type { Issue, Severity } from "../../shared/types";
-import type { ScreenView } from "../screenViewModel";
+import type { Issue } from "../../shared/types";
+import type { ScreenLevel, ScreenView } from "../screenViewModel";
 
-const SEVERITY_COLOR: Record<Severity, string> = {
-  error: "#e03e3e",
-  warning: "#d9822b",
-  info: "#0d99ff",
+// Count-based criticality colours (more problems → more critical). Applied as a left band on
+// the screen card plus a small uppercase tag, mirroring the "critical system" visual language.
+const LEVEL: Record<ScreenLevel, { label: string; color: string }> = {
+  critical: { label: "Critical", color: "#e03e3e" },
+  high: { label: "High", color: "#e8590c" },
+  medium: { label: "Medium", color: "#d9822b" },
+  low: { label: "Low", color: "#0d99ff" },
+  clear: { label: "Clear", color: "#2f9e44" },
 };
 
-// Screen-first presentation: each screen is a collapsible section (worst first, only the top
-// one open by default). Designers fix one screen fully, then move to the next.
-// Pure view over the frozen Report — see screenViewModel.ts.
+// Screen-first presentation: every analyzed screen is a row (clean ones included). Rows with
+// findings expand into a flat "things to fix" list. Pure view over the frozen Report — see
+// screenViewModel.ts. No scores, severity, or priority: only factual descriptions.
 export function ScreensView({
   views,
   onShow,
@@ -18,17 +22,19 @@ export function ScreensView({
   views: ScreenView[];
   onShow: (issue: Issue) => void;
 }) {
-  // Only the worst screen (views are impact-sorted) is expanded by default. Reset when a new
-  // report arrives (views identity changes only when the report does — App memoizes it).
+  // Only the first screen with findings (worst — views are impact-sorted) is open by default.
+  // Reset when a new report arrives (views identity changes only when the report does).
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   useEffect(() => {
-    setExpanded(new Set(views[0] ? [views[0].screenId] : []));
+    const firstWithIssues = views.find((v) => v.issueCount > 0);
+    setExpanded(new Set(firstWithIssues ? [firstWithIssues.screenId] : []));
   }, [views]);
 
   const toggle = (id: string) =>
     setExpanded((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
 
@@ -36,56 +42,87 @@ export function ScreensView({
     <div style={styles.wrap}>
       <div style={styles.sectionHeading}>Screens</div>
       {views.map((screen) => {
-        const isOpen = expanded.has(screen.screenId);
-        return (
-          <section key={screen.screenId} style={styles.screen}>
-            <button
-              style={styles.screenHead}
-              onClick={() => toggle(screen.screenId)}
-              title={isOpen ? "Collapse screen" : "Expand screen"}
-            >
-              <span style={{ ...styles.sev, background: SEVERITY_COLOR[screen.severity] }} />
-              <span style={styles.screenName} title={screen.screenName}>
-                {screen.screenName}
-              </span>
-              <span style={styles.screenCount}>
-                {screen.issueCount} issue{screen.issueCount === 1 ? "" : "s"}
-              </span>
-              <span style={styles.chevron}>{isOpen ? "▼" : "▶"}</span>
-            </button>
+        const hasIssues = screen.issueCount > 0;
+        const isOpen = hasIssues && expanded.has(screen.screenId);
+        const countLabel = hasIssues
+          ? `${screen.issueCount} thing${screen.issueCount === 1 ? "" : "s"} to fix`
+          : "0 issues";
+        const level = LEVEL[screen.level];
 
-            {isOpen &&
-              screen.groups.map((group) => (
-                <div key={group.title} style={styles.group}>
-                  <div style={styles.groupTitle}>
-                    {group.title} ({group.items.length})
-                  </div>
-                  {group.items.map(({ issue, description }) => (
-                    <div key={issue.id} style={styles.item}>
-                      <span style={{ ...styles.dot, background: SEVERITY_COLOR[issue.severity] }} />
-                      <span style={styles.body}>
-                        <span style={styles.name} title={issue.nodeName}>
-                          {issue.nodeName}
-                        </span>
-                        <span style={styles.desc}>{description}</span>
+        const header = (
+          <>
+            <span style={styles.screenName} title={screen.screenName}>
+              {screen.screenName}
+            </span>
+            {hasIssues && (
+              <span style={{ ...styles.levelTag, color: level.color }}>{level.label}</span>
+            )}
+            <span style={hasIssues ? styles.screenCount : styles.screenCountClean}>{countLabel}</span>
+            {hasIssues && <span style={styles.chevron}>{isOpen ? "▼" : "▶"}</span>}
+          </>
+        );
+
+        return (
+          <section
+            key={screen.screenId}
+            style={{ ...styles.screen, borderLeft: `3px solid ${level.color}` }}
+          >
+            {hasIssues ? (
+              <button
+                style={styles.screenHead}
+                onClick={() => toggle(screen.screenId)}
+                title={isOpen ? "Collapse screen" : "Expand screen"}
+              >
+                {header}
+              </button>
+            ) : (
+              <div style={styles.screenHeadStatic}>{header}</div>
+            )}
+
+            {isOpen && (
+              <div style={styles.fixes}>
+                <div style={styles.fixesHeading}>Things to fix ({screen.issueCount})</div>
+                {screen.items.map(({ issue, description }, i) => (
+                  <div
+                    key={issue.id}
+                    style={{ ...styles.item, ...(i > 0 ? styles.itemDivider : null) }}
+                  >
+                    <span style={styles.itemBody}>
+                      <span style={styles.itemTitle} title={issue.nodeName}>
+                        {issue.nodeName}
                       </span>
-                      <button
-                        style={styles.show}
-                        onClick={() => onShow(issue)}
-                        title="Highlight this layer on the canvas"
-                      >
-                        Show
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ))}
+                      <span style={styles.itemDesc}>{description}</span>
+                    </span>
+                    <button
+                      style={styles.show}
+                      onClick={() => onShow(issue)}
+                      title="Highlight this layer on the canvas"
+                    >
+                      Show
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         );
       })}
     </div>
   );
 }
+
+const headBase: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+  width: "100%",
+  padding: 0,
+  border: "none",
+  background: "transparent",
+  color: "inherit",
+  font: "inherit",
+  textAlign: "left",
+};
 
 const styles: Record<string, React.CSSProperties> = {
   wrap: { display: "flex", flexDirection: "column", gap: 12 },
@@ -104,20 +141,8 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 8,
     border: "1px solid var(--figma-color-border, #e5e5e5)",
   },
-  screenHead: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    width: "100%",
-    padding: 0,
-    border: "none",
-    background: "transparent",
-    color: "inherit",
-    cursor: "pointer",
-    font: "inherit",
-    textAlign: "left",
-  },
-  sev: { flex: "0 0 auto", width: 8, height: 8, borderRadius: 4 },
+  screenHead: { ...headBase, cursor: "pointer" },
+  screenHeadStatic: { ...headBase, cursor: "default" },
   screenName: {
     fontSize: 12,
     fontWeight: 600,
@@ -125,22 +150,31 @@ const styles: Record<string, React.CSSProperties> = {
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
   },
-  screenCount: { fontSize: 11, opacity: 0.5, marginLeft: "auto", flex: "0 0 auto" },
+  levelTag: {
+    marginLeft: "auto",
+    flex: "0 0 auto",
+    fontSize: 9,
+    fontWeight: 700,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  screenCount: { fontSize: 11, opacity: 0.6, flex: "0 0 auto" },
+  screenCountClean: { fontSize: 11, opacity: 0.4, marginLeft: "auto", flex: "0 0 auto" },
   chevron: { fontSize: 9, opacity: 0.5, flex: "0 0 auto" },
-  group: { display: "flex", flexDirection: "column", gap: 2 },
-  groupTitle: {
+  fixes: { display: "flex", flexDirection: "column" },
+  fixesHeading: {
     fontSize: 10,
     fontWeight: 600,
     textTransform: "uppercase",
     letterSpacing: 0.4,
     opacity: 0.55,
-    margin: "4px 0 2px",
+    margin: "2px 0 4px",
   },
-  item: { display: "flex", alignItems: "flex-start", gap: 8, padding: "4px 2px" },
-  dot: { flex: "0 0 auto", width: 8, height: 8, borderRadius: 4, marginTop: 4 },
-  body: { display: "flex", flexDirection: "column", gap: 2, minWidth: 0, flex: 1 },
-  name: { fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis" },
-  desc: { fontSize: 11, lineHeight: 1.4, opacity: 0.8 },
+  item: { display: "flex", alignItems: "flex-start", gap: 8, padding: "8px 2px" },
+  itemDivider: { borderTop: "1px solid var(--figma-color-border, #ececec)" },
+  itemBody: { display: "flex", flexDirection: "column", gap: 2, minWidth: 0, flex: 1 },
+  itemTitle: { fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis" },
+  itemDesc: { fontSize: 11, lineHeight: 1.4, opacity: 0.8 },
   show: {
     flex: "0 0 auto",
     fontSize: 10,

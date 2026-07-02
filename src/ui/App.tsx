@@ -51,6 +51,8 @@ export function App() {
   const [meta, setMeta] = useState<GenMeta | null>(null);
   const [previewActive, setPreviewActive] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  // Review lens: screen-first (per-screen findings) vs system-level (root-cause / component fixes).
+  const [reviewMode, setReviewMode] = useState<"screens" | "system">("screens");
 
   // Advisor state (unchanged behavior).
   const [, setRevealState] = useState<RevealState>(NO_REVEAL);
@@ -136,6 +138,24 @@ export function App() {
   };
   const exitPreview = () => send({ type: "PREVIEW_EXIT" });
   const exportLocalized = () => send({ type: "EXPORT" });
+
+  // In-app reset: return to the initial language screen without reopening the plugin. Restores
+  // the canvas (exit preview / clear reveal) and clears all analysis + status UI state.
+  const newAnalysis = () => {
+    if (previewActive) send({ type: "PREVIEW_EXIT" });
+    send({ type: "EXIT_REVEAL" });
+    setReport(null);
+    setMeta(null);
+    setNotice(null);
+    setNavError(null);
+    setGenError(null);
+    setRevealingCauseId(null);
+    setRevealState(NO_REVEAL);
+    setPreviewActive(false);
+    // reviewMode intentionally preserved — the toggle remembers the user's last-chosen lens.
+    setStageStatus(emptyStages());
+    setPhase("generate");
+  };
 
   // ── Advisor handlers ────────────────────────────────────────────────────────
   const revealGroup = (checkId: CheckId, nodeIds: string[]) =>
@@ -231,6 +251,9 @@ export function App() {
             <button style={styles.chip} onClick={exportLocalized}>
               Export Localized Screens
             </button>
+            <button style={styles.newAnalysis} onClick={newAnalysis} title="Clear results and start over">
+              New Analysis
+            </button>
           </div>
           {notice && <p style={styles.completeMeta}>{notice}</p>}
         </header>
@@ -244,10 +267,27 @@ export function App() {
             <p style={styles.clear}>✓ Translations fit. Nothing to fix.</p>
           ) : (
             <div style={styles.results}>
-              <ScreensView views={screenViews} onShow={showIssue} />
+              {/* Two review lenses over the SAME findings — pick by audience. */}
+              <div style={styles.modeToggle} role="tablist">
+                <button
+                  style={reviewMode === "screens" ? styles.tabActive : styles.tab}
+                  onClick={() => setReviewMode("screens")}
+                  title="Review findings screen by screen"
+                >
+                  Screens
+                </button>
+                <button
+                  style={reviewMode === "system" ? styles.tabActive : styles.tab}
+                  onClick={() => setReviewMode("system")}
+                  title="Review systemic fixes across the design system"
+                >
+                  Design System
+                </button>
+              </div>
 
-              <div style={styles.recSection}>
-                <div style={styles.recHeading}>Global Design System Fixes</div>
+              {reviewMode === "screens" ? (
+                <ScreensView views={screenViews} onShow={showIssue} />
+              ) : (
                 <RootCausePanel
                   rootCauses={report.rootCauses}
                   issueById={issueById}
@@ -256,7 +296,7 @@ export function App() {
                   onExitReveal={exitReveal}
                   onGoToComponent={goToComponent}
                 />
-              </div>
+              )}
             </div>
           ))}
       </div>
@@ -282,7 +322,19 @@ const styles: Record<string, React.CSSProperties> = {
   completeTitle: { fontSize: 13, fontWeight: 600, margin: 0, color: "#2f9e44" },
   previewTitle: { fontSize: 13, fontWeight: 600, margin: 0, color: "var(--figma-color-text-brand, #0d99ff)" },
   completeMeta: { fontSize: 11, opacity: 0.7, margin: "2px 0 0" },
-  completeActions: { display: "flex", gap: 6, flexWrap: "wrap" },
+  completeActions: { display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" },
+  newAnalysis: {
+    fontSize: 11,
+    padding: "4px 8px",
+    marginLeft: "auto",
+    borderRadius: 6,
+    border: "none",
+    background: "transparent",
+    color: "inherit",
+    opacity: 0.6,
+    cursor: "pointer",
+    textDecoration: "underline",
+  },
   chip: {
     fontSize: 11,
     padding: "4px 10px",
@@ -293,20 +345,37 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
   },
   content: { flex: 1, overflowY: "auto", padding: "12px 8px" },
-  results: { display: "flex", flexDirection: "column", gap: 20 },
-  recSection: {
+  results: { display: "flex", flexDirection: "column", gap: 14 },
+  modeToggle: {
     display: "flex",
-    flexDirection: "column",
-    gap: 8,
-    paddingTop: 16,
-    borderTop: "1px solid var(--figma-color-border, #e5e5e5)",
+    gap: 2,
+    padding: 2,
+    borderRadius: 8,
+    background: "var(--figma-color-bg-secondary, #f0f0f0)",
   },
-  recHeading: {
+  tab: {
+    flex: 1,
     fontSize: 11,
     fontWeight: 600,
-    textTransform: "uppercase",
-    letterSpacing: 0.4,
-    opacity: 0.6,
+    padding: "5px 8px",
+    borderRadius: 6,
+    border: "none",
+    background: "transparent",
+    color: "inherit",
+    opacity: 0.7,
+    cursor: "pointer",
+  },
+  tabActive: {
+    flex: 1,
+    fontSize: 11,
+    fontWeight: 600,
+    padding: "5px 8px",
+    borderRadius: 6,
+    border: "none",
+    background: "var(--figma-color-bg, #fff)",
+    color: "inherit",
+    cursor: "pointer",
+    boxShadow: "0 1px 2px rgba(0,0,0,0.12)",
   },
   clear: { fontSize: 12, padding: "0 8px 12px", color: "#2f9e44" },
   navError: {
