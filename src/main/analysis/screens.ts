@@ -30,9 +30,11 @@ export function buildScreens(
     byFrame.set(issue.frameId, arr);
   }
 
-  const screens: ScreenSummary[] = [];
-  for (const [frameId, info] of scannedScreens) {
-    const members = byFrame.get(frameId) ?? [];
+  const summarize = (
+    frameId: string,
+    members: Issue[],
+    info?: ScannedScreen,
+  ): ScreenSummary => {
     let high = 0;
     let medium = 0;
     let low = 0;
@@ -42,18 +44,37 @@ export function buildScreens(
       else if (band === "medium") medium++;
       else low++;
     }
-    screens.push({
+    // Screen identity comes from the issues themselves (stamped from the ORIGINAL node in
+    // assemble) and falls back to the scanned-screen record — never the other way round.
+    const ex = members[0];
+    return {
       id: frameId,
-      name: info.name,
-      pageId: info.pageId,
-      pageName: info.pageName,
+      name: info?.name ?? ex?.frameName ?? "Frame",
+      pageId: info?.pageId ?? ex?.pageId ?? "",
+      pageName: info?.pageName ?? ex?.pageName ?? "",
       issueCount: members.length,
       highImpact: high,
       mediumImpact: medium,
       lowImpact: low,
       impactScore: members.reduce((sum, m) => sum + m.impactScore, 0),
       issueIds: members.map((m) => m.id),
-    });
+    };
+  };
+
+  const screens: ScreenSummary[] = [];
+  const seen = new Set<string>();
+
+  // Affected screens — grouped straight from the issues' own frameId, so counts never depend
+  // on the scanned-screen keys lining up with the (clone → original) remap.
+  for (const [frameId, members] of byFrame) {
+    seen.add(frameId);
+    screens.push(summarize(frameId, members, scannedScreens.get(frameId)));
+  }
+
+  // Clean screens — scanned but with no issues of their own.
+  for (const [frameId, info] of scannedScreens) {
+    if (seen.has(frameId)) continue;
+    screens.push(summarize(frameId, [], info));
   }
 
   screens.sort((a, b) => b.impactScore - a.impactScore);

@@ -24,7 +24,6 @@ import {
   cloneForMeasurement,
   removeClones,
   remapIssuesToOriginal,
-  remapScannedScreens,
 } from "./translate/page";
 import { applyTranslations } from "./translate/apply";
 import { captureLayout, verifyCapture } from "./delta/snapshot";
@@ -115,7 +114,17 @@ figma.ui.onmessage = async (msg: UiToMain) => {
         // document is left exactly as before. Reveal/Verify then operate on the real layers.
         const issues = dedupeIssues([...staticResult.issues, ...pressureIssues]);
         remapIssuesToOriginal(issues, cloneToOriginal);
-        const scannedScreens = remapScannedScreens(staticResult.scannedScreens, cloneToOriginal);
+
+        // A "screen" is a frame the user SELECTED — not the outermost frame. When screens are
+        // nested inside a wrapper frame, the outermost-frame rule would lump them into one; the
+        // selection is the source of truth (header says "N screens" = N roots).
+        const rootIds = new Set(roots.map((r) => r.id));
+        const scannedScreens = new Map(
+          roots.map((r) => {
+            const page = pageOf(r);
+            return [r.id, { name: r.name, pageId: page?.id ?? "", pageName: page?.name ?? "" }];
+          }),
+        );
 
         removeClones(frames);
 
@@ -125,6 +134,7 @@ figma.ui.onmessage = async (msg: UiToMain) => {
           createdAt: Date.now(),
           scannedNodes: staticResult.scannedNodes,
           scannedScreens,
+          rootIds,
         });
 
         // Verify Mode: diff against the previous run. Original node ids are stable across
@@ -184,6 +194,12 @@ figma.ui.onmessage = async (msg: UiToMain) => {
     }
 
     case "EXPORT": {
+      // Leave preview first so the originals are visible again — otherwise the exported
+      // clones would inherit the hidden originals' visibility and land as an invisible section.
+      if (isPreviewActive()) {
+        exitPreview();
+        post({ type: "PREVIEW_STATE", active: false });
+      }
       const count = await exportLocalized(lastRootIds, lastTranslations, lastLanguage);
       post({ type: "EXPORT_DONE", count });
       break;

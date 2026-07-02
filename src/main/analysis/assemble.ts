@@ -12,6 +12,36 @@ export interface ReportMetadata {
   createdAt: number;
   scannedNodes: number;
   scannedScreens: Map<string, ScannedScreen>; // every scanned screen, so clean ones appear
+  rootIds?: Set<string>; // the frames the user selected = the "screens" (see resolveScreen)
+}
+
+/**
+ * Which screen an issue belongs to. A "screen" is a frame the user SELECTED, so we walk up
+ * to the nearest selected-root ancestor rather than the outermost frame — otherwise screens
+ * nested inside a wrapper frame all collapse into that one wrapper. Falls back to the
+ * outermost-frame rule when the node isn't under any selected root.
+ */
+function resolveScreen(
+  node: BaseNode,
+  rootIds: Set<string> | undefined,
+  info: Map<string, ScannedScreen>,
+): ReturnType<typeof getScreenInfo> {
+  if (rootIds) {
+    let cur: BaseNode | null = node;
+    while (cur && cur.type !== "PAGE") {
+      if (rootIds.has(cur.id)) {
+        const meta = info.get(cur.id);
+        return {
+          frameId: cur.id,
+          frameName: "name" in cur ? cur.name : undefined,
+          pageId: meta?.pageId ?? "",
+          pageName: meta?.pageName ?? "",
+        };
+      }
+      cur = cur.parent;
+    }
+  }
+  return getScreenInfo(node);
 }
 
 /**
@@ -37,8 +67,8 @@ export function assembleReport(issues: Issue[], metadata: ReportMetadata): Repor
         issue.componentName = component.componentName;
         issue.instanceCount = component.instanceCount;
       }
-      // Attach screen identity (Screen Intelligence).
-      const screen = getScreenInfo(node);
+      // Attach screen identity (Screen Intelligence). Screens = the user's selected roots.
+      const screen = resolveScreen(node, metadata.rootIds, metadata.scannedScreens);
       issue.pageId = screen.pageId;
       issue.pageName = screen.pageName;
       issue.frameId = screen.frameId;
