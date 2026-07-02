@@ -10,6 +10,9 @@ const CONFIDENCE_LABEL: Record<Confidence, string> = {
   low: "Possible recommendation",
 };
 
+// Softer reach copy: "Fix once, improves 6 screens" → "One update improves 6 screens".
+const oneUpdate = (impact: string) => impact.replace(/fix once,?\s*/i, "One update ");
+
 // THE product. The collapsed card alone answers what to fix, why, and what happens —
 // no expansion required. Expanding only adds proof ("seen in") and actions.
 export function RootCausePanel({
@@ -60,7 +63,7 @@ export function RootCausePanel({
               </div>
               <div style={styles.fix}>{fix.title}</div>
               <div style={styles.why}>{fix.description}</div>
-              <div style={styles.impact}>{fix.expectedImpact}</div>
+              <div style={styles.impact}>{oneUpdate(fix.expectedImpact)}</div>
               {fix.confidence !== "high" && (
                 <div style={styles.confidence}>{CONFIDENCE_LABEL[fix.confidence]}</div>
               )}
@@ -92,7 +95,7 @@ export function RootCausePanel({
                     style={styles.primaryBtn}
                     onClick={() => (revealing ? onExitReveal() : onReveal(rc.id, dominant, nodeIds))}
                   >
-                    {revealing ? "Hide" : "Show on canvas"}
+                    {revealing ? "Hide" : "Reveal on Canvas"}
                   </button>
                   {componentId && (
                     <button style={styles.secondaryBtn} onClick={() => onGoToComponent(componentId)}>
@@ -110,19 +113,15 @@ export function RootCausePanel({
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  panel: { display: "flex", flexDirection: "column", gap: 8, margin: "4px 0 14px" },
-  card: {
-    border: "0.5px solid var(--figma-color-border, #e0e0e0)",
-    borderRadius: 8,
-    background: "var(--figma-color-bg, #fff)",
-  },
+  panel: { display: "flex", flexDirection: "column", margin: "4px 0 8px" },
+  card: { borderBottom: "1px solid var(--figma-color-border, #ececec)" },
   face: {
     display: "flex",
     flexDirection: "column",
-    gap: 5,
+    gap: 7,
     width: "100%",
     textAlign: "left",
-    padding: "12px 14px",
+    padding: "18px 4px",
     border: "none",
     background: "transparent",
     color: "inherit",
@@ -149,9 +148,8 @@ const styles: Record<string, React.CSSProperties> = {
   expanded: {
     display: "flex",
     flexDirection: "column",
-    gap: 10,
-    padding: "10px 14px 12px",
-    borderTop: "0.5px solid var(--figma-color-border, #ececec)",
+    gap: 12,
+    padding: "0 4px 18px",
   },
   why_works: { display: "flex", flexDirection: "column", gap: 2 },
   whyWorksText: { fontSize: 12, opacity: 0.85, lineHeight: 1.45 },

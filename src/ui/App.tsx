@@ -9,7 +9,6 @@ import { GenerateView } from "./components/GenerateView";
 import { ProgressView } from "./components/ProgressView";
 import { RootCausePanel } from "./components/RootCausePanel";
 import { ScreensView } from "./components/ScreensView";
-import { DiffBanner } from "./components/DiffBanner";
 import { buildScreenViews } from "./screenViewModel";
 
 type Phase = "generate" | "generating" | "advisor";
@@ -80,6 +79,10 @@ export function App() {
         setReport(msg.report);
         setMeta(msg.meta);
         setPhase("advisor");
+        // Preview is the default: localize the screens in place as soon as analysis lands
+        // (no viewport move — the sandbox just clone-swaps over the hidden originals).
+        setPreviewActive(true);
+        send({ type: "PREVIEW_ENTER" });
         break;
       case "GENERATE_ERROR":
         setGenError(msg.message);
@@ -160,10 +163,10 @@ export function App() {
   // ── Advisor handlers ────────────────────────────────────────────────────────
   const revealGroup = (checkId: CheckId, nodeIds: string[]) =>
     send({ type: "REVEAL", checkId, nodeIds });
-  // A per-screen [Show] reuses the frozen reveal mechanism for a single layer.
-  const showIssue = (issue: Issue) => {
+  // Reveal from a screen section (one layer or a whole type) — the frozen reveal mechanism.
+  const revealScreen = (checkId: CheckId, nodeIds: string[]) => {
     setNavError(null);
-    revealGroup(issue.checkId, [issue.nodeId]);
+    revealGroup(checkId, nodeIds);
   };
   const revealCause = (causeId: string, checkId: CheckId, nodeIds: string[]) => {
     setRevealingCauseId(causeId);
@@ -223,7 +226,13 @@ export function App() {
         <header style={styles.complete}>
           <div>
             {previewActive ? (
-              <p style={styles.previewTitle}>👁 Previewing {LANGUAGE_LABEL[meta.language]}</p>
+              <>
+                <p style={styles.previewTitle}>👁 {LANGUAGE_LABEL[meta.language]} Preview Ready</p>
+                <p style={styles.context}>Review localization issues below.</p>
+                <p style={styles.context}>
+                  Use Reveal to inspect problems directly on the canvas.
+                </p>
+              </>
             ) : (
               <>
                 <p style={styles.completeTitle}>
@@ -232,26 +241,26 @@ export function App() {
                 <p style={styles.completeMeta}>
                   {meta.screens} screen{meta.screens === 1 ? "" : "s"} ·{" "}
                   {meta.strings.toLocaleString()} strings translated ·{" "}
-                  {report?.summary.totalIssues ?? 0} issue
-                  {(report?.summary.totalIssues ?? 0) === 1 ? "" : "s"} found
+                  {report?.summary.totalIssues ?? 0} localization issue
+                  {(report?.summary.totalIssues ?? 0) === 1 ? "" : "s"}
                 </p>
               </>
             )}
           </div>
           <div style={styles.completeActions}>
+            <button style={styles.secondaryBtn} onClick={exportLocalized}>
+              Export Localized Screens
+            </button>
             {previewActive ? (
-              <button style={styles.chip} onClick={exitPreview}>
+              <button style={styles.tertiaryBtn} onClick={exitPreview}>
                 Exit Preview
               </button>
             ) : (
-              <button style={styles.chip} onClick={enterPreview}>
+              <button style={styles.tertiaryBtn} onClick={enterPreview}>
                 Preview
               </button>
             )}
-            <button style={styles.chip} onClick={exportLocalized}>
-              Export Localized Screens
-            </button>
-            <button style={styles.newAnalysis} onClick={newAnalysis} title="Clear results and start over">
+            <button style={styles.tertiaryBtn} onClick={newAnalysis} title="Reset and start over">
               New Analysis
             </button>
           </div>
@@ -261,7 +270,6 @@ export function App() {
 
       <div style={styles.content}>
         {navError && <p style={styles.navError}>{navError}</p>}
-        {report?.diff && <DiffBanner diff={report.diff} />}
         {report &&
           (report.summary.totalIssues === 0 ? (
             <p style={styles.clear}>✓ Translations fit. Nothing to fix.</p>
@@ -286,7 +294,7 @@ export function App() {
               </div>
 
               {reviewMode === "screens" ? (
-                <ScreensView views={screenViews} onShow={showIssue} />
+                <ScreensView views={screenViews} onReveal={revealScreen} />
               ) : (
                 <RootCausePanel
                   rootCauses={report.rootCauses}
@@ -321,31 +329,31 @@ const styles: Record<string, React.CSSProperties> = {
   },
   completeTitle: { fontSize: 13, fontWeight: 600, margin: 0, color: "#2f9e44" },
   previewTitle: { fontSize: 13, fontWeight: 600, margin: 0, color: "var(--figma-color-text-brand, #0d99ff)" },
+  context: { fontSize: 11, opacity: 0.65, margin: "2px 0 0", lineHeight: 1.4 },
   completeMeta: { fontSize: 11, opacity: 0.7, margin: "2px 0 0" },
-  completeActions: { display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" },
-  newAnalysis: {
+  completeActions: { display: "flex", gap: 4, flexWrap: "wrap", alignItems: "center", marginTop: 2 },
+  secondaryBtn: {
     fontSize: 11,
-    padding: "4px 8px",
-    marginLeft: "auto",
-    borderRadius: 6,
+    fontWeight: 600,
+    padding: "5px 12px",
+    borderRadius: 7,
+    border: "1px solid var(--figma-color-border, #d5d5d5)",
+    background: "transparent",
+    color: "inherit",
+    cursor: "pointer",
+  },
+  tertiaryBtn: {
+    fontSize: 11,
+    padding: "5px 8px",
+    borderRadius: 7,
     border: "none",
     background: "transparent",
     color: "inherit",
     opacity: 0.6,
     cursor: "pointer",
-    textDecoration: "underline",
   },
-  chip: {
-    fontSize: 11,
-    padding: "4px 10px",
-    borderRadius: 6,
-    border: "1px solid var(--figma-color-border, #ccc)",
-    background: "transparent",
-    color: "inherit",
-    cursor: "pointer",
-  },
-  content: { flex: 1, overflowY: "auto", padding: "12px 8px" },
-  results: { display: "flex", flexDirection: "column", gap: 14 },
+  content: { flex: 1, overflowY: "auto", padding: "10px 16px 20px" },
+  results: { display: "flex", flexDirection: "column", gap: 16 },
   modeToggle: {
     display: "flex",
     gap: 2,
