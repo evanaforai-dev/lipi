@@ -1,11 +1,11 @@
 // Lightweight, one-time onboarding shown before the first analysis. Explains the four-step
 // workflow with a single illustration, then hands off to the generate screen. Presentation only.
 
-const STEPS: { title: string; desc: string }[] = [
-  { title: "Select screens", desc: "Pick the English frames on your canvas." },
-  { title: "Choose language", desc: "Hindi, Tamil, or both." },
-  { title: "Generate & Analyze", desc: "See where translated text breaks the layout." },
-  { title: "Preview & Export", desc: "Preview in place, then export localized copies." },
+const STEPS: string[] = [
+  "Select screens",
+  "Choose language",
+  "Generate & Analyze",
+  "Preview & Export",
 ];
 
 export function OnboardingView({ onStart }: { onStart: () => void }) {
@@ -17,12 +17,9 @@ export function OnboardingView({ onStart }: { onStart: () => void }) {
 
       <ol style={styles.steps}>
         {STEPS.map((s, i) => (
-          <li key={s.title} style={styles.step}>
+          <li key={s} style={styles.step}>
             <span style={styles.num}>{i + 1}</span>
-            <span style={styles.stepText}>
-              <span style={styles.stepTitle}>{s.title}</span>
-              <span style={styles.stepDesc}>{s.desc}</span>
-            </span>
+            <span style={styles.stepTitle}>{s}</span>
           </li>
         ))}
       </ol>
@@ -91,7 +88,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: "100%",
     textAlign: "left",
   },
-  step: { display: "flex", alignItems: "flex-start", gap: 12 },
+  step: { display: "flex", alignItems: "center", gap: 12 },
   num: {
     flex: "0 0 auto",
     display: "flex",
@@ -105,7 +102,5 @@ const styles: Record<string, React.CSSProperties> = {
     background: "var(--figma-color-bg-secondary, #f0f0f0)",
     color: "var(--figma-color-text, #333)",
   },
-  stepText: { display: "flex", flexDirection: "column", gap: 1, minWidth: 0 },
   stepTitle: { fontSize: 13, fontWeight: 600 },
-  stepDesc: { fontSize: 11, opacity: 0.6, lineHeight: 1.4 },
 };

@@ -60,15 +60,20 @@ export function ScreensView({
             {open && (
               <div className="lpt-reveal" style={styles.findings}>
                 {screen.findings.map(({ issue, title, explanation }) => (
-                  <div key={issue.id} style={styles.finding}>
-                    <span style={styles.findingTitle}>{title}</span>
-                    <span style={styles.findingText}>{explanation}</span>
-                    <button
-                      className="lpt-reveal-link"
-                      onClick={() => onReveal(issue.checkId, [issue.nodeId])}
-                    >
-                      <span aria-hidden="true">◎</span> Reveal
-                    </button>
+                  <div key={issue.id} className="lpt-finding" style={styles.finding}>
+                    <div style={styles.findingRow}>
+                      <span style={styles.findingTitle}>{title}</span>
+                      <button
+                        className="lpt-reveal-link"
+                        onClick={() => onReveal(issue.checkId, [issue.nodeId])}
+                      >
+                        <span aria-hidden="true">◎</span> Reveal
+                      </button>
+                    </div>
+                    {/* Confirmation detail — quiet by default, revealed on hover. */}
+                    <span className="lpt-finding-detail" style={styles.findingText}>
+                      {explanation}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -122,8 +127,13 @@ const styles: Record<string, React.CSSProperties> = {
   },
   count: { fontSize: 12, opacity: 0.55, flex: "0 0 auto" },
   chevron: { fontSize: 15, opacity: 0.4, flex: "0 0 auto", width: 10, textAlign: "center" },
-  findings: { display: "flex", flexDirection: "column", gap: 14 },
-  finding: { display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" },
-  findingTitle: { fontSize: 13, fontWeight: 600 },
-  findingText: { fontSize: 12, opacity: 0.7, lineHeight: 1.45 },
+  findings: { display: "flex", flexDirection: "column", gap: 12 },
+  finding: { display: "flex", flexDirection: "column" },
+  findingRow: { display: "flex", alignItems: "flex-start", gap: 8, width: "100%" },
+  findingTitle: { fontSize: 13, fontWeight: 600, flex: 1, minWidth: 0, lineHeight: 1.35 },
+  findingText: {
+    fontSize: 12,
+    color: "var(--figma-color-text-secondary, #7a7a7a)",
+    lineHeight: 1.45,
+  },
 };

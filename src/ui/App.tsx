@@ -363,7 +363,7 @@ export function App() {
             ) : (
               <>
                 <button className="lpt-btn lpt-btn-secondary" onClick={exportLocalized}>
-                  Export Localized Screens
+                  Export
                 </button>
                 <button className="lpt-btn lpt-btn-ghost" onClick={enterPreview}>
                   Preview

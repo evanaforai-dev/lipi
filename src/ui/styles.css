@@ -135,6 +135,23 @@ button:disabled {
   pointer-events: auto;
 }
 
+/* Per-finding explanation — confirmation detail, quiet until you hover the finding. Keeps the
+   expanded list scannable (titles + Reveal) instead of a wall of sentences. */
+.lpt-finding-detail {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition:
+    max-height 160ms ease,
+    opacity 160ms ease,
+    margin-top 160ms ease;
+}
+.lpt-finding:hover .lpt-finding-detail {
+  max-height: 60px;
+  opacity: 1;
+  margin-top: 3px;
+}
+
 /* Disclosure chevron rotation. */
 .lpt-chevron {
   display: inline-block;
