@@ -24,7 +24,7 @@ export function GenerateView({
   providerId: ProviderId;
   keyRequired: boolean;
   hasKey: boolean;
-  error: string | null;
+  error: { title: string; message: string } | null;
   onToggleLang: (id: Language) => void;
   onSelectProvider: (id: ProviderId) => void;
   onSaveKey: (key: string) => void;
@@ -92,7 +92,15 @@ export function GenerateView({
         </div>
       ) : null}
 
-      {error && <p style={styles.error}>{error}</p>}
+      {error && (
+        <div style={styles.errorCard}>
+          <span style={styles.errorIcon}>⚠️</span>
+          <span style={styles.errorBody}>
+            <span style={styles.errorTitle}>{error.title}</span>
+            <span style={styles.errorMsg}>{error.message}</span>
+          </span>
+        </div>
+      )}
 
       <button style={styles.primary} onClick={onGenerate} disabled={blocked}>
         Generate &amp; Test
@@ -141,7 +149,19 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
     alignSelf: "flex-start",
   },
-  error: { fontSize: 12, color: "#e03e3e", margin: "0 0 10px" },
+  errorCard: {
+    display: "flex",
+    gap: 10,
+    alignItems: "flex-start",
+    padding: "10px 12px",
+    borderRadius: 8,
+    background: "var(--figma-color-bg-warning-tertiary, #fff4e5)",
+    margin: "0 0 12px",
+  },
+  errorIcon: { fontSize: 14, flex: "0 0 auto", marginTop: 1 },
+  errorBody: { display: "flex", flexDirection: "column", gap: 2, minWidth: 0 },
+  errorTitle: { fontSize: 12.5, fontWeight: 600 },
+  errorMsg: { fontSize: 11.5, opacity: 0.75, lineHeight: 1.4 },
   primary: {
     fontSize: 13,
     fontWeight: 600,

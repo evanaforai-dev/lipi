@@ -9,6 +9,7 @@ import { GenerateView } from "./components/GenerateView";
 import { ProgressView } from "./components/ProgressView";
 import { RootCausePanel } from "./components/RootCausePanel";
 import { ScreensView } from "./components/ScreensView";
+import { StatusView, StatusBanner } from "./components/StatusView";
 import { buildScreenViews } from "./screenViewModel";
 
 type Phase = "generate" | "generating" | "advisor";
@@ -43,7 +44,7 @@ export function App() {
   // Demo is the default so the plugin runs immediately after cloning — no API key needed.
   const [providerId, setProviderId] = useState<ProviderId>("demo");
   const [key, setKey] = useState<string | null>(null);
-  const [genError, setGenError] = useState<string | null>(null);
+  const [genError, setGenError] = useState<{ title: string; message: string } | null>(null);
   const [stageStatus, setStageStatus] = useState<Record<Stage, StageState>>(emptyStages());
   // Multi-language: each selected language keeps its own report; activeLang is the one on view.
   const [selectedLangs, setSelectedLangs] = useState<Language[]>(["hi"]);
@@ -52,7 +53,10 @@ export function App() {
   );
   const [activeLang, setActiveLang] = useState<Language | null>(null);
   const [previewLang, setPreviewLang] = useState<Language | null>(null); // which language is previewed
-  const [notice, setNotice] = useState<string | null>(null);
+  // Transient confirmation (export complete / preview closed), shown as a dismissible banner.
+  const [banner, setBanner] = useState<
+    { icon: string; title: string; message: string; actionLabel?: string; onAction?: () => void } | null
+  >(null);
   // Review lens: screen-first (per-screen findings) vs system-level (root-cause / component fixes).
   const [reviewMode, setReviewMode] = useState<"screens" | "system">("screens");
   // Languages still to run through the pipeline this analysis (order = selection order).
@@ -77,7 +81,7 @@ export function App() {
         setKey(msg.key);
         break;
       case "PREPARE_ERROR":
-        setGenError(msg.message);
+        setGenError({ title: "No screens selected", message: msg.message });
         setPhase("generate");
         break;
       case "PREPARE_RESULT":
@@ -106,7 +110,7 @@ export function App() {
         break;
       }
       case "GENERATE_ERROR":
-        setGenError(msg.message);
+        setGenError({ title: "Analysis couldn't complete", message: msg.message });
         setPhase("generate");
         break;
       case "REVEAL_STATE":
@@ -125,9 +129,13 @@ export function App() {
         setPreviewLang(msg.active ? msg.language : null);
         break;
       case "EXPORT_DONE":
-        setNotice(
-          `Exported ${msg.count} screen${msg.count === 1 ? "" : "s"} (${LANGUAGE_LABEL[msg.language]}) to this page.`,
-        );
+        setBanner({
+          icon: "📦",
+          title: "Export complete",
+          message: `${msg.count} localized screen${msg.count === 1 ? "" : "s"} (${LANGUAGE_LABEL[msg.language]}) added to this page as a section.`,
+          actionLabel: "New Analysis",
+          onAction: newAnalysis,
+        });
         break;
     }
   });
@@ -142,6 +150,7 @@ export function App() {
     if (selectedLangs.length === 0) return;
     setGenError(null);
     setNavError(null);
+    setBanner(null);
     setReports({});
     setActiveLang(null);
     setPreviewLang(null);
@@ -157,7 +166,7 @@ export function App() {
     if (!lang) return;
     const provider = getProvider(providerId);
     if (provider.requiresKey && !key) {
-      setGenError("Add a translation key first.");
+      setGenError({ title: "Translation key needed", message: "Add a translation key to run analysis." });
       setPhase("generate");
       return;
     }
@@ -168,10 +177,19 @@ export function App() {
 
   const enterPreview = () => {
     if (!activeLang) return;
-    setNotice(null);
+    setBanner(null);
     send({ type: "PREVIEW_ENTER", language: activeLang });
   };
-  const exitPreview = () => send({ type: "PREVIEW_EXIT" });
+  const exitPreview = () => {
+    send({ type: "PREVIEW_EXIT" });
+    setBanner({
+      icon: "👁",
+      title: "Preview closed",
+      message: "Your original screens are back on the canvas.",
+      actionLabel: "Preview again",
+      onAction: enterPreview,
+    });
+  };
   const exportLocalized = () => {
     if (activeLang) send({ type: "EXPORT", language: activeLang });
   };
@@ -182,6 +200,7 @@ export function App() {
     setActiveLang(lang);
     setNavError(null);
     setRevealingCauseId(null);
+    setBanner(null);
     if (previewActive) send({ type: "PREVIEW_ENTER", language: lang });
   };
 
@@ -195,7 +214,7 @@ export function App() {
     setPreviewLang(null);
     setSelectedLangs(["hi"]); // clear language selection back to the fresh-open default
     genQueue.current = [];
-    setNotice(null);
+    setBanner(null);
     setNavError(null);
     setGenError(null);
     setRevealingCauseId(null);
@@ -320,12 +339,13 @@ export function App() {
               </>
             )}
           </div>
-          {notice && <p style={styles.completeMeta}>{notice}</p>}
         </header>
       )}
 
       <div style={styles.content}>
         {navError && <p style={styles.navError}>{navError}</p>}
+        {/* Transient confirmation — export complete / preview closed. */}
+        {banner && <StatusBanner {...banner} onDismiss={() => setBanner(null)} />}
         {/* Results separated by language — each tab is that language's own analysis. */}
         {doneLangs.length > 1 && (
           <div style={styles.langTabs} role="tablist">
@@ -342,7 +362,16 @@ export function App() {
         )}
         {report &&
           (report.summary.totalIssues === 0 ? (
-            <p style={styles.clear}>✓ Translations fit. Nothing to fix.</p>
+            <StatusView
+              icon="✓"
+              tone="positive"
+              title="No issues found"
+              description={`Every screen fits comfortably in ${LANGUAGE_LABEL[meta?.language ?? "hi"]}. You're ready to hand off.`}
+              actionLabel="Export Localized Screens"
+              onAction={exportLocalized}
+              secondaryLabel="New Analysis"
+              onSecondary={newAnalysis}
+            />
           ) : (
             <div style={styles.results}>
               {/* Two review lenses over the SAME findings — pick by audience. */}
