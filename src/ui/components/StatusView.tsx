@@ -29,12 +29,12 @@ export function StatusView({
       {(actionLabel || secondaryLabel) && (
         <div style={styles.actions}>
           {actionLabel && (
-            <button style={styles.primary} onClick={onAction}>
+            <button className="lpt-btn lpt-btn-primary" onClick={onAction}>
               {actionLabel}
             </button>
           )}
           {secondaryLabel && (
-            <button style={styles.secondary} onClick={onSecondary}>
+            <button className="lpt-btn lpt-btn-secondary" onClick={onSecondary}>
               {secondaryLabel}
             </button>
           )}
@@ -67,7 +67,7 @@ export function StatusBanner({
         <span style={styles.bannerMsg}>{message}</span>
       </span>
       {actionLabel && (
-        <button style={styles.bannerAction} onClick={onAction}>
+        <button className="lpt-btn lpt-btn-ghost lpt-btn-sm" style={styles.bannerAction} onClick={onAction}>
           {actionLabel}
         </button>
       )}
@@ -113,34 +113,14 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 4,
   },
   title: { fontSize: 15, fontWeight: 600, margin: 0 },
-  desc: { fontSize: 12.5, opacity: 0.65, lineHeight: 1.5, margin: 0, maxWidth: 280 },
+  desc: { fontSize: 12, opacity: 0.65, lineHeight: 1.5, margin: 0, maxWidth: 280 },
   actions: { display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap", justifyContent: "center" },
-  primary: {
-    fontSize: 12,
-    fontWeight: 600,
-    padding: "8px 16px",
-    borderRadius: 8,
-    border: "none",
-    background: "var(--figma-color-bg-brand, #0d99ff)",
-    color: "var(--figma-color-text-onbrand, #fff)",
-    cursor: "pointer",
-  },
-  secondary: {
-    fontSize: 12,
-    fontWeight: 600,
-    padding: "8px 16px",
-    borderRadius: 8,
-    border: "1px solid var(--figma-color-border, #d5d5d5)",
-    background: "transparent",
-    color: "inherit",
-    cursor: "pointer",
-  },
   banner: {
     display: "flex",
     alignItems: "center",
     gap: 10,
     padding: "10px 12px",
-    borderRadius: 10,
+    borderRadius: 8,
     background: "var(--figma-color-bg-secondary, #f4f4f4)",
     marginBottom: 12,
   },
@@ -148,17 +128,7 @@ const styles: Record<string, React.CSSProperties> = {
   bannerText: { display: "flex", flexDirection: "column", gap: 1, minWidth: 0, flex: 1 },
   bannerTitle: { fontSize: 12, fontWeight: 600 },
   bannerMsg: { fontSize: 11, opacity: 0.65, lineHeight: 1.4 },
-  bannerAction: {
-    flex: "0 0 auto",
-    fontSize: 11,
-    fontWeight: 600,
-    padding: "5px 10px",
-    borderRadius: 6,
-    border: "none",
-    background: "var(--figma-color-bg, #fff)",
-    color: "var(--figma-color-text-brand, #0d99ff)",
-    cursor: "pointer",
-  },
+  bannerAction: { flex: "0 0 auto", color: "var(--figma-color-text-brand, #0d99ff)" },
   bannerClose: {
     flex: "0 0 auto",
     fontSize: 11,

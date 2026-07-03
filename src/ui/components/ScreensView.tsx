@@ -46,7 +46,8 @@ export function ScreensView({
                     <span style={styles.findingTitle}>{title}</span>
                     <span style={styles.findingText}>{explanation}</span>
                     <button
-                      style={styles.reveal}
+                      className="lpt-btn lpt-btn-primary lpt-btn-sm"
+                      style={{ marginTop: 4 }}
                       onClick={() => onReveal(issue.checkId, [issue.nodeId])}
                     >
                       Reveal on Canvas
@@ -65,7 +66,11 @@ export function ScreensView({
               </ul>
             )}
 
-            <button style={styles.previewBtn} onClick={() => onPreviewScreen(screen.screenId)}>
+            <button
+              className="lpt-btn lpt-btn-secondary lpt-btn-sm"
+              style={{ alignSelf: "flex-start", marginTop: 2 }}
+              onClick={() => onPreviewScreen(screen.screenId)}
+            >
               Preview Screen
             </button>
           </section>
@@ -82,7 +87,7 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: "column",
     gap: 10,
     padding: "14px 14px 12px",
-    borderRadius: 10,
+    borderRadius: 8,
     background: "var(--figma-color-bg-secondary, #f7f7f7)",
   },
   head: {
@@ -110,33 +115,10 @@ const styles: Record<string, React.CSSProperties> = {
   count: { fontSize: 12, opacity: 0.55, flex: "0 0 auto" },
   chevron: { fontSize: 15, opacity: 0.4, flex: "0 0 auto", width: 10, textAlign: "center" },
   preview: { listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 5 },
-  previewItem: { display: "flex", gap: 8, fontSize: 12.5, opacity: 0.75, lineHeight: 1.4 },
+  previewItem: { display: "flex", gap: 8, fontSize: 12, opacity: 0.75, lineHeight: 1.4 },
   bullet: { flex: "0 0 auto", opacity: 0.5 },
   findings: { display: "flex", flexDirection: "column", gap: 14 },
   finding: { display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" },
   findingTitle: { fontSize: 13, fontWeight: 600 },
   findingText: { fontSize: 12, opacity: 0.7, lineHeight: 1.45 },
-  reveal: {
-    marginTop: 4,
-    fontSize: 11,
-    fontWeight: 600,
-    padding: "5px 12px",
-    borderRadius: 7,
-    border: "none",
-    background: "var(--figma-color-bg-brand, #0d99ff)",
-    color: "var(--figma-color-text-onbrand, #fff)",
-    cursor: "pointer",
-  },
-  previewBtn: {
-    alignSelf: "flex-start",
-    fontSize: 11,
-    fontWeight: 600,
-    padding: "6px 12px",
-    borderRadius: 7,
-    border: "1px solid var(--figma-color-border, #d5d5d5)",
-    background: "var(--figma-color-bg, #fff)",
-    color: "inherit",
-    cursor: "pointer",
-    marginTop: 2,
-  },
 };

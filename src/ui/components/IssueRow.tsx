@@ -102,7 +102,7 @@ const styles: Record<string, React.CSSProperties> = {
   componentButton: {
     fontSize: 10,
     padding: "2px 8px",
-    borderRadius: 5,
+    borderRadius: 6,
     border: "1px solid var(--figma-color-border, #ccc)",
     background: "var(--figma-color-bg, #fff)",
     color: "inherit",

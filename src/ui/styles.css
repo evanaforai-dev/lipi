@@ -32,6 +32,61 @@ button:active:not(:disabled) {
   transform: translateY(0.5px);
   filter: brightness(0.96);
 }
+button:disabled {
+  cursor: default;
+}
+
+/* Button system — one consistent hierarchy (primary / secondary / ghost), with real
+   hover, active, and disabled states. Components add only layout (width, alignment). */
+.lpt-btn {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 7px 14px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.lpt-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.lpt-btn-sm {
+  font-size: 11px;
+  padding: 5px 11px;
+}
+.lpt-btn-lg {
+  font-size: 13px;
+  padding: 10px 16px;
+}
+.lpt-btn-block {
+  width: 100%;
+}
+.lpt-btn-primary {
+  background: var(--figma-color-bg-brand, #0d99ff);
+  color: var(--figma-color-text-onbrand, #fff);
+}
+.lpt-btn-secondary {
+  background: transparent;
+  border-color: var(--figma-color-border, #d9d9d9);
+  color: inherit;
+}
+.lpt-btn-secondary:hover:not(:disabled) {
+  background: var(--figma-color-bg-secondary, #f2f2f2);
+  filter: none;
+}
+.lpt-btn-ghost {
+  background: transparent;
+  color: var(--figma-color-text-secondary, #7a7a7a);
+  font-weight: 500;
+  padding: 7px 10px;
+}
+.lpt-btn-ghost:hover:not(:disabled) {
+  background: var(--figma-color-bg-secondary, #f2f2f2);
+  color: var(--figma-color-text, #333);
+  filter: none;
+}
 
 /* Cards — gentle lift on hover. */
 .lpt-card {

@@ -84,7 +84,8 @@ export function GenerateView({
             onChange={(e) => setKeyDraft(e.target.value)}
           />
           <button
-            style={styles.secondary}
+            className="lpt-btn lpt-btn-secondary lpt-btn-sm"
+            style={{ alignSelf: "flex-start" }}
             onClick={() => keyDraft.trim() && onSaveKey(keyDraft.trim())}
           >
             Save key
@@ -94,7 +95,7 @@ export function GenerateView({
 
       {error && (
         <div style={styles.errorCard}>
-          <span style={styles.errorIcon}>⚠️</span>
+          <span style={styles.errorIcon}>!</span>
           <span style={styles.errorBody}>
             <span style={styles.errorTitle}>{error.title}</span>
             <span style={styles.errorMsg}>{error.message}</span>
@@ -102,7 +103,12 @@ export function GenerateView({
         </div>
       )}
 
-      <button style={styles.primary} onClick={onGenerate} disabled={blocked}>
+      <button
+        className="lpt-btn lpt-btn-primary lpt-btn-lg lpt-btn-block"
+        style={{ marginTop: 4 }}
+        onClick={onGenerate}
+        disabled={blocked}
+      >
         Generate &amp; Test
       </button>
       <p style={styles.foot}>Select your English frames on the canvas first.</p>
@@ -112,7 +118,7 @@ export function GenerateView({
 
 const styles: Record<string, React.CSSProperties> = {
   root: { display: "flex", flexDirection: "column", padding: "20px 16px", gap: 4 },
-  title: { fontSize: 15, fontWeight: 700, margin: 0 },
+  title: { fontSize: 15, fontWeight: 600, margin: 0 },
   subtitle: { fontSize: 12, opacity: 0.7, margin: "2px 0 18px", lineHeight: 1.4 },
   label: { fontSize: 11, textTransform: "uppercase", letterSpacing: 0.4, opacity: 0.6, margin: "0 0 8px" },
   langs: { display: "flex", flexDirection: "column", gap: 6, marginBottom: 18 },
@@ -139,16 +145,6 @@ const styles: Record<string, React.CSSProperties> = {
     background: "var(--figma-color-bg, #fff)",
     color: "inherit",
   },
-  secondary: {
-    fontSize: 12,
-    padding: "7px 12px",
-    borderRadius: 6,
-    border: "1px solid var(--figma-color-border, #ccc)",
-    background: "transparent",
-    color: "inherit",
-    cursor: "pointer",
-    alignSelf: "flex-start",
-  },
   errorCard: {
     display: "flex",
     gap: 10,
@@ -158,20 +154,21 @@ const styles: Record<string, React.CSSProperties> = {
     background: "var(--figma-color-bg-warning-tertiary, #fff4e5)",
     margin: "0 0 12px",
   },
-  errorIcon: { fontSize: 14, flex: "0 0 auto", marginTop: 1 },
-  errorBody: { display: "flex", flexDirection: "column", gap: 2, minWidth: 0 },
-  errorTitle: { fontSize: 12.5, fontWeight: 600 },
-  errorMsg: { fontSize: 11.5, opacity: 0.75, lineHeight: 1.4 },
-  primary: {
-    fontSize: 13,
-    fontWeight: 600,
-    padding: "11px 12px",
-    borderRadius: 8,
-    border: "none",
-    background: "var(--figma-color-bg-brand, #0d99ff)",
+  errorIcon: {
+    flex: "0 0 auto",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    fontSize: 12,
+    fontWeight: 700,
+    background: "var(--figma-color-bg-warning, #d9822b)",
     color: "#fff",
-    cursor: "pointer",
-    marginTop: 4,
   },
+  errorBody: { display: "flex", flexDirection: "column", gap: 2, minWidth: 0 },
+  errorTitle: { fontSize: 12, fontWeight: 600 },
+  errorMsg: { fontSize: 11, opacity: 0.75, lineHeight: 1.4 },
   foot: { fontSize: 11, opacity: 0.55, margin: "10px 0 0", textAlign: "center" },
 };

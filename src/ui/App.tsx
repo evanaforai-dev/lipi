@@ -130,7 +130,7 @@ export function App() {
         break;
       case "EXPORT_DONE":
         setBanner({
-          icon: "📦",
+          icon: "✓",
           title: "Export complete",
           message: `${msg.count} localized screen${msg.count === 1 ? "" : "s"} (${LANGUAGE_LABEL[msg.language]}) added to this page as a section.`,
           actionLabel: "New Analysis",
@@ -318,25 +318,33 @@ export function App() {
           <div style={styles.completeActions}>
             {previewActive ? (
               <>
-                <button style={styles.secondaryBtn} onClick={exitPreview}>
+                <button className="lpt-btn lpt-btn-secondary" onClick={exitPreview}>
                   Exit Preview
                 </button>
-                <button style={styles.primaryBtn} onClick={exportLocalized}>
+                <button className="lpt-btn lpt-btn-primary" onClick={exportLocalized}>
                   Export
                 </button>
-                <button style={styles.tertiaryBtn} onClick={newAnalysis} title="Reset and start over">
+                <button
+                  className="lpt-btn lpt-btn-ghost"
+                  onClick={newAnalysis}
+                  title="Reset and start over"
+                >
                   New Analysis
                 </button>
               </>
             ) : (
               <>
-                <button style={styles.tertiaryBtn} onClick={enterPreview}>
-                  Preview
-                </button>
-                <button style={styles.secondaryBtn} onClick={exportLocalized}>
+                <button className="lpt-btn lpt-btn-secondary" onClick={exportLocalized}>
                   Export Localized Screens
                 </button>
-                <button style={styles.tertiaryBtn} onClick={newAnalysis} title="Reset and start over">
+                <button className="lpt-btn lpt-btn-ghost" onClick={enterPreview}>
+                  Preview
+                </button>
+                <button
+                  className="lpt-btn lpt-btn-ghost"
+                  onClick={newAnalysis}
+                  title="Reset and start over"
+                >
                   New Analysis
                 </button>
               </>
@@ -448,43 +456,13 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 1,
     alignSelf: "flex-start",
     padding: "7px 12px",
-    borderRadius: 10,
+    borderRadius: 8,
     background: "var(--figma-color-bg-brand, #0d99ff)",
     color: "var(--figma-color-text-onbrand, #fff)",
   },
-  pillTitle: { fontSize: 12, fontWeight: 700, letterSpacing: 0.2 },
+  pillTitle: { fontSize: 12, fontWeight: 600, letterSpacing: 0.2 },
   pillMeta: { fontSize: 11, opacity: 0.9 },
   completeActions: { display: "flex", gap: 4, flexWrap: "wrap", alignItems: "center", marginTop: 2 },
-  primaryBtn: {
-    fontSize: 11,
-    fontWeight: 600,
-    padding: "5px 14px",
-    borderRadius: 7,
-    border: "none",
-    background: "var(--figma-color-bg-brand, #0d99ff)",
-    color: "var(--figma-color-text-onbrand, #fff)",
-    cursor: "pointer",
-  },
-  secondaryBtn: {
-    fontSize: 11,
-    fontWeight: 600,
-    padding: "5px 12px",
-    borderRadius: 7,
-    border: "1px solid var(--figma-color-border, #d5d5d5)",
-    background: "transparent",
-    color: "inherit",
-    cursor: "pointer",
-  },
-  tertiaryBtn: {
-    fontSize: 11,
-    padding: "5px 8px",
-    borderRadius: 7,
-    border: "none",
-    background: "transparent",
-    color: "inherit",
-    opacity: 0.6,
-    cursor: "pointer",
-  },
   content: { flex: 1, overflowY: "auto", padding: "10px 16px 20px" },
   langTabs: {
     display: "flex",

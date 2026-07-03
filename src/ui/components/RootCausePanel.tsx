@@ -82,13 +82,16 @@ export function RootCausePanel({
                 )}
                 <div style={styles.actions}>
                   <button
-                    style={styles.primaryBtn}
+                    className="lpt-btn lpt-btn-primary lpt-btn-sm"
                     onClick={() => (revealing ? onExitReveal() : onReveal(rc.id, dominant, nodeIds))}
                   >
                     {revealing ? "Hide" : "Reveal on Canvas"}
                   </button>
                   {componentId && (
-                    <button style={styles.secondaryBtn} onClick={() => onGoToComponent(componentId)}>
+                    <button
+                      className="lpt-btn lpt-btn-secondary lpt-btn-sm"
+                      onClick={() => onGoToComponent(componentId)}
+                    >
                       Go to component
                     </button>
                   )}
@@ -147,23 +150,4 @@ const styles: Record<string, React.CSSProperties> = {
   affectsLabel: { fontSize: 10, textTransform: "uppercase", letterSpacing: 0.4, opacity: 0.5 },
   affectsItems: { fontSize: 11, opacity: 0.7 },
   actions: { display: "flex", gap: 8 },
-  primaryBtn: {
-    fontSize: 12,
-    fontWeight: 600,
-    padding: "6px 14px",
-    borderRadius: 6,
-    border: "none",
-    background: "var(--figma-color-bg-brand, #0d99ff)",
-    color: "#fff",
-    cursor: "pointer",
-  },
-  secondaryBtn: {
-    fontSize: 12,
-    padding: "6px 14px",
-    borderRadius: 6,
-    border: "1px solid var(--figma-color-border, #ccc)",
-    background: "transparent",
-    color: "inherit",
-    cursor: "pointer",
-  },
 };
