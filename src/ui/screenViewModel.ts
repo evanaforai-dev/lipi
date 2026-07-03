@@ -1,8 +1,17 @@
-import type { Issue, Report } from "../shared/types";
+import type { CheckId, Issue, Report } from "../shared/types";
 
 // PRESENTATION LAYER ONLY. Reshapes the frozen Report into a screen-first review model:
 // each screen carries a flat list of findings in plain design language — no engine categories,
 // scores, or severity. Nothing in analysis changes; every finding references the existing Issue.
+
+// Coarse, plain type labels for the collapsed one-line summary (scan, don't read).
+const TYPE_LABEL: Record<CheckId, string> = {
+  overflow: "Overflow",
+  "small-indic": "Small text",
+  "line-clip": "Clipping",
+  "missing-font": "Font support",
+};
+const TYPE_ORDER: CheckId[] = ["overflow", "small-indic", "line-clip", "missing-font"];
 
 export interface Finding {
   issue: Issue;
@@ -13,6 +22,7 @@ export interface ScreenView {
   screenId: string;
   screenName: string;
   findingCount: number;
+  typeSummary: string; // "Overflow · Small text" — the distinct problem types, for the collapsed row
   findings: Finding[];
 }
 
@@ -88,10 +98,12 @@ export function buildScreenViews(report: Report, issueById: Map<string, Issue>):
     if (screen.issueCount === 0) continue; // only screens that need review
 
     const findings: Finding[] = [];
+    const types = new Set<CheckId>();
     for (const id of screen.issueIds) {
       const issue = issueById.get(id);
       if (!issue) continue;
       findings.push({ issue, title: titleFor(issue), explanation: explain(issue) });
+      types.add(issue.checkId);
     }
     if (findings.length === 0) continue;
 
@@ -99,6 +111,9 @@ export function buildScreenViews(report: Report, issueById: Map<string, Issue>):
       screenId: screen.id,
       screenName: screen.name,
       findingCount: findings.length,
+      typeSummary: TYPE_ORDER.filter((c) => types.has(c))
+        .map((c) => TYPE_LABEL[c])
+        .join(" · "),
       findings,
     });
   }

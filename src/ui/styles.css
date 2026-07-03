@@ -88,6 +88,28 @@ button:disabled {
   filter: none;
 }
 
+/* Reveal — a quiet, repeated action (one per finding). Text + icon, not a filled button, so
+   a screen full of findings reads as content rather than a wall of primary buttons. */
+.lpt-reveal-link {
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--figma-color-text-brand, #0d99ff);
+  cursor: pointer;
+}
+.lpt-reveal-link:hover:not(:disabled) {
+  background: var(--figma-color-bg-secondary, #f2f2f2);
+  filter: none;
+}
+
 /* Cards — gentle lift on hover. */
 .lpt-card {
   transition:

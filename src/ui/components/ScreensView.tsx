@@ -27,7 +27,11 @@ export function ScreensView({
               onClick={() => setOpenId(open ? null : screen.screenId)}
               title={open ? "Collapse" : "Show findings"}
             >
-              <span style={styles.name}>{screen.screenName}</span>
+              <span style={styles.headText}>
+                <span style={styles.name}>{screen.screenName}</span>
+                {/* Collapsed: scan the problem TYPES, not every title. */}
+                {!open && <span style={styles.summary}>{screen.typeSummary}</span>}
+              </span>
               <span style={styles.count}>
                 {screen.findingCount} finding{screen.findingCount === 1 ? "" : "s"}
               </span>
@@ -39,31 +43,21 @@ export function ScreensView({
               </span>
             </button>
 
-            {open ? (
+            {open && (
               <div className="lpt-reveal" style={styles.findings}>
                 {screen.findings.map(({ issue, title, explanation }) => (
                   <div key={issue.id} style={styles.finding}>
                     <span style={styles.findingTitle}>{title}</span>
                     <span style={styles.findingText}>{explanation}</span>
                     <button
-                      className="lpt-btn lpt-btn-primary lpt-btn-sm"
-                      style={{ marginTop: 4 }}
+                      className="lpt-reveal-link"
                       onClick={() => onReveal(issue.checkId, [issue.nodeId])}
                     >
-                      Reveal on Canvas
+                      <span aria-hidden="true">◎</span> Reveal
                     </button>
                   </div>
                 ))}
               </div>
-            ) : (
-              <ul style={styles.preview}>
-                {screen.findings.map(({ issue, title }) => (
-                  <li key={issue.id} style={styles.previewItem}>
-                    <span style={styles.bullet}>•</span>
-                    {title}
-                  </li>
-                ))}
-              </ul>
             )}
 
             <button
@@ -103,20 +97,23 @@ const styles: Record<string, React.CSSProperties> = {
     textAlign: "left",
     font: "inherit",
   },
+  headText: { display: "flex", flexDirection: "column", gap: 2, flex: 1, minWidth: 0 },
   name: {
     fontSize: 15,
     fontWeight: 600,
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
-    flex: 1,
-    minWidth: 0,
+  },
+  summary: {
+    fontSize: 11,
+    opacity: 0.55,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
   },
   count: { fontSize: 12, opacity: 0.55, flex: "0 0 auto" },
   chevron: { fontSize: 15, opacity: 0.4, flex: "0 0 auto", width: 10, textAlign: "center" },
-  preview: { listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 5 },
-  previewItem: { display: "flex", gap: 8, fontSize: 12, opacity: 0.75, lineHeight: 1.4 },
-  bullet: { flex: "0 0 auto", opacity: 0.5 },
   findings: { display: "flex", flexDirection: "column", gap: 14 },
   finding: { display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" },
   findingTitle: { fontSize: 13, fontWeight: 600 },
