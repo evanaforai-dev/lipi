@@ -6,8 +6,9 @@ const SEEN_LIMIT = 2;
 // Softer reach copy: "Fix once, improves 6 screens" → "One update improves 6 screens".
 const oneUpdate = (impact: string) => impact.replace(/fix once,?\s*/i, "One update ");
 
-// THE product. The collapsed card alone answers what to fix, why, and what happens —
-// no expansion required. Expanding only adds proof ("seen in") and actions.
+// Native-inspector shape: the always-visible face answers "what to do", "how much it helps",
+// and offers the two actions (jump to component, reveal) — no reading required. The evidence
+// (explanation, why it works, affects, example) sits behind a single "Why?" disclosure.
 export function RootCausePanel({
   rootCauses,
   issueById,
@@ -40,7 +41,6 @@ export function RootCausePanel({
         const affects = [
           ...new Set(members.map((i) => i.frameName ?? i.pageName).filter((n): n is string => !!n)),
         ].slice(0, SEEN_LIMIT);
-        // One representative path as proof — not navigable, not a list.
         const ex = members[0];
         const example = ex
           ? [...new Set([ex.frameName, ex.componentName, ex.nodeName].filter((p): p is string => !!p))].join(" → ")
@@ -49,53 +49,57 @@ export function RootCausePanel({
 
         return (
           <div key={rc.id} style={styles.card}>
-            <button style={styles.face} onClick={() => setExpandedId(open ? null : rc.id)}>
-              <div style={styles.kicker}>
-                <span>{fix.pattern}</span>
-                <span style={styles.caret}>{open ? "▾" : "▸"}</span>
+            <div style={styles.face}>
+              <div style={styles.kicker}>{fix.pattern}</div>
+              <div style={styles.title}>{fix.title}</div>
+              <div style={styles.metaRow}>
+                <span style={styles.impact}>{oneUpdate(fix.expectedImpact)}</span>
+                <button
+                  style={styles.whyToggle}
+                  onClick={() => setExpandedId(open ? null : rc.id)}
+                >
+                  {open ? "Hide" : "Why?"}
+                </button>
               </div>
-              <div style={styles.fix}>{fix.title}</div>
-              <div style={styles.why}>{fix.description}</div>
-              <div style={styles.impact}>{oneUpdate(fix.expectedImpact)}</div>
-              {resolved && (
-                <div style={styles.verify}>{rc.resolvedCount} fixed since last check</div>
-              )}
-            </button>
+              {resolved && <div style={styles.verify}>{rc.resolvedCount} fixed since last check</div>}
+
+              <div style={styles.actions}>
+                {componentId && (
+                  <button
+                    className="lpt-btn lpt-btn-secondary lpt-btn-sm"
+                    onClick={() => onGoToComponent(componentId)}
+                  >
+                    Go to component
+                  </button>
+                )}
+                <button
+                  className="lpt-reveal-link"
+                  onClick={() => (revealing ? onExitReveal() : onReveal(rc.id, dominant, nodeIds))}
+                >
+                  {revealing ? "Hide" : <><span aria-hidden="true">◎</span> Reveal</>}
+                </button>
+              </div>
+            </div>
 
             {open && (
               <div style={styles.expanded}>
-                <div style={styles.why_works}>
-                  <span style={styles.affectsLabel}>Why this works</span>
-                  <span style={styles.whyWorksText}>{fix.justification}</span>
+                <p style={styles.explain}>{fix.description}</p>
+                <div style={styles.row}>
+                  <span style={styles.rowLabel}>Why this works</span>
+                  <span style={styles.rowValue}>{fix.justification}</span>
                 </div>
                 {affects.length > 0 && (
-                  <div style={styles.affects}>
-                    <span style={styles.affectsLabel}>Affects</span>
-                    <span style={styles.affectsItems}>{affects.join(", ")}</span>
+                  <div style={styles.row}>
+                    <span style={styles.rowLabel}>Affects</span>
+                    <span style={styles.rowValue}>{affects.join(", ")}</span>
                   </div>
                 )}
                 {example && (
-                  <div style={styles.affects}>
-                    <span style={styles.affectsLabel}>Example</span>
-                    <span style={styles.affectsItems}>{example}</span>
+                  <div style={styles.row}>
+                    <span style={styles.rowLabel}>Example</span>
+                    <span style={styles.rowValue}>{example}</span>
                   </div>
                 )}
-                <div style={styles.actions}>
-                  <button
-                    className="lpt-reveal-link"
-                    onClick={() => (revealing ? onExitReveal() : onReveal(rc.id, dominant, nodeIds))}
-                  >
-                    {revealing ? "Hide" : <><span aria-hidden="true">◎</span> Reveal</>}
-                  </button>
-                  {componentId && (
-                    <button
-                      className="lpt-btn lpt-btn-secondary lpt-btn-sm"
-                      onClick={() => onGoToComponent(componentId)}
-                    >
-                      Go to component
-                    </button>
-                  )}
-                </div>
               </div>
             )}
           </div>
@@ -111,43 +115,46 @@ const styles: Record<string, React.CSSProperties> = {
   face: {
     display: "flex",
     flexDirection: "column",
-    gap: 7,
-    width: "100%",
-    textAlign: "left",
-    padding: "18px 4px",
-    border: "none",
-    background: "transparent",
-    color: "inherit",
-    cursor: "pointer",
-    font: "inherit",
+    gap: 6,
+    padding: "14px 4px",
   },
   kicker: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
+    fontSize: 10,
+    fontWeight: 600,
+    opacity: 0.5,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  title: { fontSize: 14, fontWeight: 600, lineHeight: 1.3 },
+  metaRow: { display: "flex", alignItems: "baseline", gap: 8 },
+  impact: { fontSize: 12, opacity: 0.7, flex: 1, minWidth: 0 },
+  whyToggle: {
+    flex: "0 0 auto",
     fontSize: 11,
     fontWeight: 600,
-    opacity: 0.6,
+    padding: 0,
+    border: "none",
+    background: "transparent",
+    color: "var(--figma-color-text-brand, #0d99ff)",
+    cursor: "pointer",
+  },
+  verify: { fontSize: 11, color: "#2f9e44", opacity: 0.9 },
+  actions: { display: "flex", alignItems: "center", gap: 8, marginTop: 4 },
+  expanded: { display: "flex", flexDirection: "column", gap: 10, padding: "0 4px 16px" },
+  explain: {
+    fontSize: 12,
+    color: "var(--figma-color-text-secondary, #7a7a7a)",
+    lineHeight: 1.45,
+    margin: 0,
+  },
+  row: { display: "flex", gap: 10, alignItems: "baseline" },
+  rowLabel: {
+    flex: "0 0 auto",
+    width: 84,
+    fontSize: 10,
     textTransform: "uppercase",
     letterSpacing: 0.4,
+    opacity: 0.5,
   },
-  caret: { fontSize: 10, opacity: 0.7 },
-  fix: { fontSize: 15, fontWeight: 700, lineHeight: 1.25 },
-  why: { fontSize: 12, opacity: 0.75, lineHeight: 1.4 },
-  impact: { fontSize: 12, fontWeight: 600, marginTop: 1 },
-  confidence: { fontSize: 10, opacity: 0.45, letterSpacing: 0.2 },
-  verify: { fontSize: 11, color: "#2f9e44", opacity: 0.9, marginTop: 1 },
-  expanded: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 12,
-    padding: "0 4px 18px",
-  },
-  why_works: { display: "flex", flexDirection: "column", gap: 2 },
-  whyWorksText: { fontSize: 12, opacity: 0.85, lineHeight: 1.45 },
-  affects: { display: "flex", gap: 8, alignItems: "baseline" },
-  affectsLabel: { fontSize: 10, textTransform: "uppercase", letterSpacing: 0.4, opacity: 0.5 },
-  affectsItems: { fontSize: 11, opacity: 0.7 },
-  actions: { display: "flex", gap: 8 },
+  rowValue: { fontSize: 11, opacity: 0.75, lineHeight: 1.45, minWidth: 0 },
 };
