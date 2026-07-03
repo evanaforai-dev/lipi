@@ -121,6 +121,20 @@ button:disabled {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
 }
 
+/* Row action (Preview) — reserves its slot always (no layout shift), revealed on card
+   hover or when the card is expanded, so the resting screen list stays quiet. */
+.lpt-row-action {
+  flex: 0 0 auto;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease;
+}
+.lpt-card:hover .lpt-row-action,
+.lpt-card.is-open .lpt-row-action {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 /* Disclosure chevron rotation. */
 .lpt-chevron {
   display: inline-block;

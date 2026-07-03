@@ -82,10 +82,10 @@ export function RootCausePanel({
                 )}
                 <div style={styles.actions}>
                   <button
-                    className="lpt-btn lpt-btn-primary lpt-btn-sm"
+                    className="lpt-reveal-link"
                     onClick={() => (revealing ? onExitReveal() : onReveal(rc.id, dominant, nodeIds))}
                   >
-                    {revealing ? "Hide" : "Reveal on Canvas"}
+                    {revealing ? "Hide" : <><span aria-hidden="true">◎</span> Reveal</>}
                   </button>
                   {componentId && (
                     <button

@@ -1,44 +1,41 @@
 import type { Stage } from "../../shared/translate";
-import { STAGE_LABEL, STAGE_ORDER } from "../../shared/translate";
+import { STAGE_ORDER } from "../../shared/translate";
 
 type StageState = "done" | "active" | "pending";
 
-// A staged generation view — calm and inevitable, not a spinner. Each step completes
-// visibly so it reads like a production process the user can trust.
+// Calm, single-line progress — one headline plus a determinate bar that advances as the
+// pipeline completes. The per-stage engine steps are intentionally not surfaced: during a
+// short wait, users want "how far along", not a reading task in engine vocabulary.
 export function ProgressView({ status }: { status: Record<Stage, StageState> }) {
+  const done = STAGE_ORDER.filter((s) => status[s] === "done").length;
+  const pct = Math.round((done / STAGE_ORDER.length) * 100);
+
   return (
     <div style={styles.root}>
-      <p style={styles.title}>Generating localized version…</p>
-      <div style={styles.list}>
-        {STAGE_ORDER.map((stage) => {
-          const s = status[stage];
-          return (
-            <div key={stage} style={{ ...styles.row, opacity: s === "pending" ? 0.4 : 1 }}>
-              <span
-                className="lpt-mark"
-                style={{ ...styles.mark, ...(s === "done" ? styles.markDone : null) }}
-              >
-                {s === "done" ? "✓" : s === "active" ? "•" : "○"}
-              </span>
-              <span style={{ fontWeight: s === "active" ? 600 : 400 }}>{STAGE_LABEL[stage]}</span>
-            </div>
-          );
-        })}
+      <p style={styles.title}>Analyzing localization…</p>
+      <p style={styles.sub}>Translating and measuring your screens.</p>
+      <div style={styles.track}>
+        <div style={{ ...styles.bar, width: `${Math.max(pct, 6)}%` }} />
       </div>
     </div>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  root: { display: "flex", flexDirection: "column", padding: "28px 20px", gap: 4 },
-  title: { fontSize: 13, fontWeight: 600, margin: "0 0 18px" },
-  list: { display: "flex", flexDirection: "column", gap: 14 },
-  row: { display: "flex", alignItems: "center", gap: 12, fontSize: 13, transition: "opacity 0.3s ease" },
-  mark: {
-    width: 16,
-    textAlign: "center",
-    fontSize: 13,
-    color: "var(--figma-color-text, #1e1e1e)",
+  root: { display: "flex", flexDirection: "column", padding: "40px 20px", gap: 6 },
+  title: { fontSize: 14, fontWeight: 600, margin: 0 },
+  sub: { fontSize: 12, opacity: 0.6, margin: "0 0 14px", lineHeight: 1.4 },
+  track: {
+    width: "100%",
+    height: 4,
+    borderRadius: 4,
+    background: "var(--figma-color-bg-secondary, #ececec)",
+    overflow: "hidden",
   },
-  markDone: { color: "#2f9e44" },
+  bar: {
+    height: "100%",
+    borderRadius: 4,
+    background: "var(--figma-color-bg-brand, #0d99ff)",
+    transition: "width 320ms ease",
+  },
 };

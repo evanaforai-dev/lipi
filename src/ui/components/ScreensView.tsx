@@ -21,27 +21,41 @@ export function ScreensView({
       {views.map((screen) => {
         const open = openId === screen.screenId;
         return (
-          <section key={screen.screenId} className="lpt-card" style={styles.card}>
-            <button
-              style={styles.head}
-              onClick={() => setOpenId(open ? null : screen.screenId)}
-              title={open ? "Collapse" : "Show findings"}
-            >
-              <span style={styles.headText}>
-                <span style={styles.name}>{screen.screenName}</span>
-                {/* Collapsed: scan the problem TYPES, not every title. */}
-                {!open && <span style={styles.summary}>{screen.typeSummary}</span>}
-              </span>
-              <span style={styles.count}>
-                {screen.findingCount} finding{screen.findingCount === 1 ? "" : "s"}
-              </span>
-              <span
-                className="lpt-chevron"
-                style={{ ...styles.chevron, transform: open ? "rotate(90deg)" : "none" }}
+          <section
+            key={screen.screenId}
+            className={`lpt-card${open ? " is-open" : ""}`}
+            style={styles.card}
+          >
+            <div style={styles.head}>
+              <button
+                style={styles.headToggle}
+                onClick={() => setOpenId(open ? null : screen.screenId)}
+                title={open ? "Collapse" : "Show findings"}
               >
-                ›
-              </span>
-            </button>
+                <span style={styles.headText}>
+                  <span style={styles.name}>{screen.screenName}</span>
+                  {/* Collapsed: scan the problem TYPES, not every title. */}
+                  {!open && <span style={styles.summary}>{screen.typeSummary}</span>}
+                </span>
+                <span style={styles.count}>
+                  {screen.findingCount} finding{screen.findingCount === 1 ? "" : "s"}
+                </span>
+                <span
+                  className="lpt-chevron"
+                  style={{ ...styles.chevron, transform: open ? "rotate(90deg)" : "none" }}
+                >
+                  ›
+                </span>
+              </button>
+              {/* Row action: revealed on hover (or when open) so the resting list stays quiet. */}
+              <button
+                className="lpt-btn lpt-btn-ghost lpt-btn-sm lpt-row-action"
+                onClick={() => onPreviewScreen(screen.screenId)}
+                title="Zoom to this screen on the canvas"
+              >
+                Preview
+              </button>
+            </div>
 
             {open && (
               <div className="lpt-reveal" style={styles.findings}>
@@ -59,14 +73,6 @@ export function ScreensView({
                 ))}
               </div>
             )}
-
-            <button
-              className="lpt-btn lpt-btn-secondary lpt-btn-sm"
-              style={{ alignSelf: "flex-start", marginTop: 2 }}
-              onClick={() => onPreviewScreen(screen.screenId)}
-            >
-              Preview Screen
-            </button>
           </section>
         );
       })}
@@ -84,11 +90,13 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 8,
     background: "var(--figma-color-bg-secondary, #f7f7f7)",
   },
-  head: {
+  head: { display: "flex", alignItems: "center", gap: 8, width: "100%" },
+  headToggle: {
     display: "flex",
     alignItems: "center",
     gap: 10,
-    width: "100%",
+    flex: 1,
+    minWidth: 0,
     padding: 0,
     border: "none",
     background: "transparent",
