@@ -31,6 +31,7 @@ import { computeLayoutDelta, printDelta } from "./delta/compute";
 import { createPressureIssues, dedupeIssues, printPressure } from "./delta/adapter";
 
 const KEY_STORAGE = "gtranslate_key";
+const ONBOARD_STORAGE = "onboarded";
 let genCounter = 0;
 // Verify Mode keeps the previous scan PER language (never persisted) so diffs never cross langs.
 const previousReportByLang: Partial<Record<Language, Report>> = {};
@@ -56,16 +57,23 @@ function pageOf(node: BaseNode): PageNode | null {
   return current as PageNode | null;
 }
 
-// Surface any saved translation key to the UI on launch.
+// Surface any saved translation key + the onboarding flag to the UI on launch.
 figma.clientStorage
   .getAsync(KEY_STORAGE)
   .then((k) => post({ type: "KEY_STATE", key: (k as string) ?? null }));
+figma.clientStorage
+  .getAsync(ONBOARD_STORAGE)
+  .then((v) => post({ type: "ONBOARD_STATE", onboarded: v === true }));
 
 figma.ui.onmessage = async (msg: UiToMain) => {
   switch (msg.type) {
     case "SAVE_KEY":
       await figma.clientStorage.setAsync(KEY_STORAGE, msg.key);
       post({ type: "KEY_STATE", key: msg.key });
+      break;
+
+    case "MARK_ONBOARDED":
+      await figma.clientStorage.setAsync(ONBOARD_STORAGE, true);
       break;
 
     case "PREPARE": {

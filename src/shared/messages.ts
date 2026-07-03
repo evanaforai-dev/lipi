@@ -15,11 +15,14 @@ export type UiToMain =
   | { type: "SELECT_NODE"; nodeId: string }
   | { type: "REVEAL"; checkId: CheckId; nodeIds: string[] }
   | { type: "EXIT_REVEAL" }
-  | { type: "GO_TO_COMPONENT"; componentId: string };
+  | { type: "GO_TO_COMPONENT"; componentId: string }
+  | { type: "MARK_ONBOARDED" }; // persist that the user has run their first analysis
 
 // ── Messages sent FROM the sandbox TO the UI ────────────────────────────────
 export type MainToUi =
   | { type: "KEY_STATE"; key: string | null }
+  | { type: "ONBOARD_STATE"; onboarded: boolean } // whether onboarding has been completed
+
   | { type: "PREPARE_RESULT"; strings: string[]; textNodeCount: number; frameCount: number }
   | { type: "PREPARE_ERROR"; message: string }
   | { type: "STAGE"; stage: Stage } // a sandbox-owned stage has started

@@ -5,6 +5,7 @@ import type { GenMeta, Language, Stage } from "../shared/translate";
 import { LANGUAGE_LABEL, STAGE_ORDER } from "../shared/translate";
 import { usePluginBridge } from "./hooks/usePluginBridge";
 import { getProvider, type ProviderId } from "./translate/provider";
+import { OnboardingView } from "./components/OnboardingView";
 import { GenerateView } from "./components/GenerateView";
 import { ProgressView } from "./components/ProgressView";
 import { RootCausePanel } from "./components/RootCausePanel";
@@ -12,7 +13,7 @@ import { ScreensView } from "./components/ScreensView";
 import { StatusView, StatusBanner } from "./components/StatusView";
 import { buildScreenViews } from "./screenViewModel";
 
-type Phase = "generate" | "generating" | "advisor";
+type Phase = "boot" | "onboarding" | "generate" | "generating" | "advisor";
 type StageState = "done" | "active" | "pending";
 
 interface RevealState {
@@ -40,7 +41,9 @@ const allDone = (): Record<Stage, StageState> => {
 };
 
 export function App() {
-  const [phase, setPhase] = useState<Phase>("generate");
+  // Start on "boot" until clientStorage tells us whether onboarding has been seen.
+  const [phase, setPhase] = useState<Phase>("boot");
+  const [onboarded, setOnboarded] = useState(false);
   // Demo is the default so the plugin runs immediately after cloning — no API key needed.
   const [providerId, setProviderId] = useState<ProviderId>("demo");
   const [key, setKey] = useState<string | null>(null);
@@ -79,6 +82,11 @@ export function App() {
     switch (msg.type) {
       case "KEY_STATE":
         setKey(msg.key);
+        break;
+      case "ONBOARD_STATE":
+        // Route out of the boot splash: first-time users see onboarding, returning users don't.
+        setOnboarded(msg.onboarded);
+        setPhase((p) => (p === "boot" ? (msg.onboarded ? "generate" : "onboarding") : p));
         break;
       case "PREPARE_ERROR":
         setGenError({ title: "No screens selected", message: msg.message });
@@ -146,8 +154,15 @@ export function App() {
   const toggleLang = (l: Language) =>
     setSelectedLangs((prev) => (prev.includes(l) ? prev.filter((x) => x !== l) : [...prev, l]));
 
+  const getStarted = () => setPhase("generate");
+
   const startGenerate = () => {
     if (selectedLangs.length === 0) return;
+    // Running the first analysis retires onboarding for good.
+    if (!onboarded) {
+      send({ type: "MARK_ONBOARDED" });
+      setOnboarded(true);
+    }
     setGenError(null);
     setNavError(null);
     setBanner(null);
@@ -263,6 +278,19 @@ export function App() {
   );
 
   // ── Render ──────────────────────────────────────────────────────────────────
+  if (phase === "boot") {
+    // Brief splash while clientStorage resolves the onboarding flag — avoids a wrong-screen flash.
+    return <main style={styles.root} />;
+  }
+
+  if (phase === "onboarding") {
+    return (
+      <main key={phase} className="lpt-page" style={styles.root}>
+        <OnboardingView onStart={getStarted} />
+      </main>
+    );
+  }
+
   if (phase === "generate") {
     return (
       <main key={phase} className="lpt-page" style={styles.root}>
