@@ -2,9 +2,9 @@ import { useState } from "react";
 import type { CheckId } from "../../shared/types";
 import type { ScreenView } from "../screenViewModel";
 
-// Screen-first review. A card per screen reads like a design-review note: the screen name, how
-// many findings, and a preview of them. Expanding shows each finding in plain language with a
-// Reveal action. No categories, scores, or severity. Pure view over the frozen Report.
+// Screen-first review as a quiet tree: screen → problem type → layers. Each problem is listed
+// once with a single recommendation; the individual layers disclose on demand. Scales to
+// hundreds of issues because density grows with problem TYPES, not issue volume.
 export function ScreensView({
   views,
   onReveal,
@@ -15,6 +15,14 @@ export function ScreensView({
   onPreviewScreen: (screenId: string) => void;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
+  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
+  const toggleGroup = (key: string) =>
+    setOpenGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
 
   return (
     <div style={styles.list}>
@@ -34,7 +42,6 @@ export function ScreensView({
               >
                 <span style={styles.headText}>
                   <span style={styles.name}>{screen.screenName}</span>
-                  {/* Collapsed: scan the problem TYPES, not every title. */}
                   {!open && <span style={styles.summary}>{screen.typeSummary}</span>}
                 </span>
                 <span style={styles.count}>
@@ -47,7 +54,6 @@ export function ScreensView({
                   ›
                 </span>
               </button>
-              {/* Row action: revealed on hover (or when open) so the resting list stays quiet. */}
               <button
                 className="lpt-btn lpt-btn-ghost lpt-btn-sm lpt-row-action"
                 onClick={() => onPreviewScreen(screen.screenId)}
@@ -58,24 +64,66 @@ export function ScreensView({
             </div>
 
             {open && (
-              <div className="lpt-reveal" style={styles.findings}>
-                {screen.findings.map(({ issue, title, explanation }) => (
-                  <div key={issue.id} className="lpt-finding" style={styles.finding}>
-                    <div style={styles.findingRow}>
-                      <span style={styles.findingTitle}>{title}</span>
-                      <button
-                        className="lpt-reveal-link"
-                        onClick={() => onReveal(issue.checkId, [issue.nodeId])}
-                      >
-                        <span aria-hidden="true">◎</span> Reveal
-                      </button>
+              <div className="lpt-reveal" style={styles.groups}>
+                {screen.groups.map((group) => {
+                  const gkey = `${screen.screenId}:${group.checkId}`;
+                  const collapsible = group.layers.length > 2;
+                  const showLayers = !collapsible || openGroups.has(gkey);
+                  return (
+                    <div key={group.checkId} style={styles.group}>
+                      <div style={styles.groupHead}>
+                        {collapsible ? (
+                          <button style={styles.groupToggle} onClick={() => toggleGroup(gkey)}>
+                            <span style={styles.groupLabel}>{group.label}</span>
+                            <span style={styles.groupCount}>· {group.layers.length}</span>
+                            <span
+                              className="lpt-chevron"
+                              style={{
+                                ...styles.groupChevron,
+                                transform: showLayers ? "rotate(90deg)" : "none",
+                              }}
+                            >
+                              ›
+                            </span>
+                          </button>
+                        ) : (
+                          <span style={styles.groupToggle}>
+                            <span style={styles.groupLabel}>{group.label}</span>
+                            <span style={styles.groupCount}>· {group.layers.length}</span>
+                          </span>
+                        )}
+                        <button
+                          className="lpt-reveal-link"
+                          onClick={() => onReveal(group.checkId, group.nodeIds)}
+                          title={`Reveal all ${group.layers.length} on the canvas`}
+                        >
+                          <span aria-hidden="true">◎</span> Reveal
+                        </button>
+                      </div>
+
+                      <p style={styles.groupRec}>{group.recommendation}</p>
+
+                      {showLayers && (
+                        <div style={styles.layers}>
+                          {group.layers.map(({ issue, name, detail }) => (
+                            <div key={issue.id} style={styles.layer}>
+                              <span style={styles.layerName} title={name}>
+                                {name}
+                              </span>
+                              {detail && <span style={styles.layerDetail}>{detail}</span>}
+                              <button
+                                className="lpt-reveal-link"
+                                onClick={() => onReveal(issue.checkId, [issue.nodeId])}
+                              >
+                                <span aria-hidden="true">◎</span> Reveal
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    {/* Confirmation detail — quiet by default, revealed on hover. */}
-                    <span className="lpt-finding-detail" style={styles.findingText}>
-                      {explanation}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </section>
@@ -127,13 +175,52 @@ const styles: Record<string, React.CSSProperties> = {
   },
   count: { fontSize: 12, opacity: 0.55, flex: "0 0 auto" },
   chevron: { fontSize: 15, opacity: 0.4, flex: "0 0 auto", width: 10, textAlign: "center" },
-  findings: { display: "flex", flexDirection: "column", gap: 12 },
-  finding: { display: "flex", flexDirection: "column" },
-  findingRow: { display: "flex", alignItems: "flex-start", gap: 8, width: "100%" },
-  findingTitle: { fontSize: 13, fontWeight: 600, flex: 1, minWidth: 0, lineHeight: 1.35 },
-  findingText: {
+
+  // Level 2 — problem groups
+  groups: { display: "flex", flexDirection: "column", gap: 16 },
+  group: { display: "flex", flexDirection: "column", gap: 3 },
+  groupHead: { display: "flex", alignItems: "center", gap: 8 },
+  groupToggle: {
+    display: "flex",
+    alignItems: "baseline",
+    gap: 5,
+    flex: 1,
+    minWidth: 0,
+    padding: 0,
+    border: "none",
+    background: "transparent",
+    color: "inherit",
+    cursor: "pointer",
+    textAlign: "left",
+    font: "inherit",
+  },
+  groupLabel: { fontSize: 13, fontWeight: 600 },
+  groupCount: { fontSize: 12, opacity: 0.5 },
+  groupChevron: { fontSize: 13, opacity: 0.4, marginLeft: 2 },
+  groupRec: { fontSize: 12, color: "var(--figma-color-text-secondary, #7a7a7a)", lineHeight: 1.45, margin: 0 },
+
+  // Level 3 — layers
+  layers: { display: "flex", flexDirection: "column", marginTop: 4, paddingLeft: 2 },
+  layer: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "5px 0",
+    borderTop: "1px solid var(--figma-color-border, #ececec)",
+  },
+  layerName: {
     fontSize: 12,
+    fontWeight: 500,
+    flex: 1,
+    minWidth: 0,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
+  layerDetail: {
+    fontSize: 11,
     color: "var(--figma-color-text-secondary, #7a7a7a)",
-    lineHeight: 1.45,
+    fontVariantNumeric: "tabular-nums",
+    flex: "0 0 auto",
   },
 };

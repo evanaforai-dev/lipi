@@ -1,10 +1,9 @@
 import type { CheckId, Issue, Report } from "../shared/types";
 
-// PRESENTATION LAYER ONLY. Reshapes the frozen Report into a screen-first review model:
-// each screen carries a flat list of findings in plain design language — no engine categories,
-// scores, or severity. Nothing in analysis changes; every finding references the existing Issue.
+// PRESENTATION LAYER ONLY. Reshapes the frozen Report into a screen → problem → layer tree so
+// the Screen tab scales to hundreds of issues: each problem TYPE is listed once with a single
+// recommendation, and the individual layers sit behind disclosure. Nothing in analysis changes.
 
-// Coarse, plain type labels for the collapsed one-line summary (scan, don't read).
 const TYPE_LABEL: Record<CheckId, string> = {
   overflow: "Overflow",
   "small-indic": "Small text",
@@ -13,82 +12,70 @@ const TYPE_LABEL: Record<CheckId, string> = {
 };
 const TYPE_ORDER: CheckId[] = ["overflow", "small-indic", "line-clip", "missing-font"];
 
-export interface Finding {
+// One plain recommendation per problem type — shown once on the group, never per layer.
+const RECOMMENDATION: Record<CheckId, string> = {
+  overflow: "Let the container grow, or shorten the copy.",
+  "small-indic": "Increase the size so localized copy stays legible.",
+  "line-clip": "Add line height so tall characters aren't clipped.",
+  "missing-font": "Switch to a font that supports this language.",
+};
+
+export interface Layer {
   issue: Issue;
-  title: string; // short plain-language headline, e.g. "Continue button wrapped"
-  explanation: string; // one sentence of what happens after localization
+  name: string; // node name
+  detail: string; // the one value that differs per layer, e.g. "11px" ("" when nothing to add)
+}
+export interface IssueGroup {
+  checkId: CheckId;
+  label: string;
+  recommendation: string;
+  layers: Layer[];
+  nodeIds: string[]; // affected layers, for the group-level "Reveal all"
 }
 export interface ScreenView {
   screenId: string;
   screenName: string;
   findingCount: number;
-  typeSummary: string; // "Overflow · Small text" — the distinct problem types, for the collapsed row
-  findings: Finding[];
+  typeSummary: string; // "Overflow · Small text" — the problem types, for the collapsed row
+  groups: IssueGroup[];
 }
 
-const WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven"];
-const word = (s: string) => WORDS[Number(s)] ?? s;
 const firstPx = (s: string) => /(\d+)\s*px/.exec(s)?.[1] ?? null;
 
-/** Short, plain headline for a finding: "<layer> <what happened>". No engine terms. */
-export function titleFor(issue: Issue): string {
-  const node = issue.nodeName;
-  const msg = issue.message;
-  switch (issue.checkId) {
-    case "overflow":
-      if (/wrapped/i.test(msg)) return `${node} wrapped`;
-      if (/pushed nearby/i.test(msg)) return `${node} shifted after localization`;
-      if (/screen grew/i.test(msg)) return `${node} grew taller`;
-      if (/needed/i.test(msg)) return `${node} ran out of space`;
-      if (/truncate/i.test(msg)) return `${node} clipped`;
-      return `${node} overflowed`;
-    case "small-indic":
-      return `${node} text too small`;
-    case "line-clip":
-      return `${node} lines cramped`;
-    case "missing-font":
-      return `${node} font can't show this language`;
-  }
-}
-
-/** One-sentence, plain explanation of a finding (no node name — the card shows the title). */
-export function explain(issue: Issue): string {
+/** The single value worth showing next to a layer name (what's unique about this instance). */
+function layerDetail(issue: Issue): string {
   const msg = issue.message;
   const detail = issue.detail ?? "";
   switch (issue.checkId) {
+    case "small-indic": {
+      const p = firstPx(detail);
+      return p ? `${p}px` : "";
+    }
     case "overflow": {
       if (/wrapped/i.test(msg)) {
-        const m = /(\d+)\s*→\s*(\d+)\s*lines/.exec(detail);
-        return m
-          ? `The label wraps from ${word(m[1])} line to ${word(m[2])}.`
-          : "The label wraps onto more lines after localization.";
+        const m = /→\s*(\d+)\s*lines/.exec(detail);
+        return m ? `${m[1]} lines` : "wraps";
       }
-      if (/screen grew/i.test(msg)) return "The screen becomes taller after localization.";
+      if (/screen grew/i.test(msg)) {
+        const p = firstPx(msg);
+        return p ? `+${p}px` : "taller";
+      }
       if (/pushed nearby/i.test(msg)) {
         const p = firstPx(msg);
-        return p ? `It pushes nearby elements down by ${p}px.` : "It pushes nearby elements out of place.";
+        return p ? `shifts ${p}px` : "shifts";
       }
       if (/needed/i.test(msg)) {
         const p = firstPx(msg);
-        return p ? `It needs about ${p}px more room than it has.` : "It needs more room than it has.";
+        return p ? `+${p}px` : "";
       }
-      if (/truncate/i.test(msg)) return "The localized text is cut off.";
-      {
-        const p = firstPx(detail);
-        return p ? `It spills about ${p}px past its container.` : "It spills past its container.";
-      }
-    }
-    case "small-indic": {
-      const now = firstPx(detail);
-      const rec = /≥\s*(\d+)\s*px/.exec(detail)?.[1];
-      return now && rec
-        ? `At ${now}px it's below the ${rec}px needed to stay readable.`
-        : "It's too small to read comfortably.";
+      if (/truncate/i.test(msg)) return "clipped";
+      const p = firstPx(detail);
+      return p ? `${p}px over` : "";
     }
     case "line-clip":
-      return "The lines sit too close, so tall characters may get clipped.";
+      return "";
     case "missing-font":
-      return "The current font can't render this language.";
+      return "";
   }
 }
 
@@ -97,24 +84,33 @@ export function buildScreenViews(report: Report, issueById: Map<string, Issue>):
   for (const screen of report.screens) {
     if (screen.issueCount === 0) continue; // only screens that need review
 
-    const findings: Finding[] = [];
-    const types = new Set<CheckId>();
+    const byCheck = new Map<CheckId, Layer[]>();
     for (const id of screen.issueIds) {
       const issue = issueById.get(id);
       if (!issue) continue;
-      findings.push({ issue, title: titleFor(issue), explanation: explain(issue) });
-      types.add(issue.checkId);
+      const arr = byCheck.get(issue.checkId) ?? [];
+      arr.push({ issue, name: issue.nodeName, detail: layerDetail(issue) });
+      byCheck.set(issue.checkId, arr);
     }
-    if (findings.length === 0) continue;
+    if (byCheck.size === 0) continue;
+
+    const groups: IssueGroup[] = TYPE_ORDER.filter((c) => byCheck.has(c)).map((checkId) => {
+      const layers = byCheck.get(checkId)!;
+      return {
+        checkId,
+        label: TYPE_LABEL[checkId],
+        recommendation: RECOMMENDATION[checkId],
+        layers,
+        nodeIds: [...new Set(layers.map((l) => l.issue.nodeId))],
+      };
+    });
 
     views.push({
       screenId: screen.id,
       screenName: screen.name,
-      findingCount: findings.length,
-      typeSummary: TYPE_ORDER.filter((c) => types.has(c))
-        .map((c) => TYPE_LABEL[c])
-        .join(" · "),
-      findings,
+      findingCount: groups.reduce((n, g) => n + g.layers.length, 0),
+      typeSummary: groups.map((g) => g.label).join(" · "),
+      groups,
     });
   }
   return views;
