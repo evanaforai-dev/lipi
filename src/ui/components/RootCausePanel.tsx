@@ -1,14 +1,7 @@
 import { useState } from "react";
-import type { CheckId, Confidence, Issue, RootCause } from "../../shared/types";
+import type { CheckId, Issue, RootCause } from "../../shared/types";
 
 const SEEN_LIMIT = 2;
-
-// Plain-language confidence — never percentages or scores.
-const CONFIDENCE_LABEL: Record<Confidence, string> = {
-  high: "Strong recommendation",
-  medium: "Likely recommendation",
-  low: "Possible recommendation",
-};
 
 // Softer reach copy: "Fix once, improves 6 screens" → "One update improves 6 screens".
 const oneUpdate = (impact: string) => impact.replace(/fix once,?\s*/i, "One update ");
@@ -64,9 +57,6 @@ export function RootCausePanel({
               <div style={styles.fix}>{fix.title}</div>
               <div style={styles.why}>{fix.description}</div>
               <div style={styles.impact}>{oneUpdate(fix.expectedImpact)}</div>
-              {fix.confidence !== "high" && (
-                <div style={styles.confidence}>{CONFIDENCE_LABEL[fix.confidence]}</div>
-              )}
               {resolved && (
                 <div style={styles.verify}>{rc.resolvedCount} fixed since last check</div>
               )}

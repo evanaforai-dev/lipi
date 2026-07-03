@@ -208,10 +208,15 @@ export function App() {
   // ── Advisor handlers ────────────────────────────────────────────────────────
   const revealGroup = (checkId: CheckId, nodeIds: string[]) =>
     send({ type: "REVEAL", checkId, nodeIds });
-  // Reveal from a screen section (one layer or a whole type) — the frozen reveal mechanism.
+  // Reveal a single finding on the canvas — the frozen reveal mechanism.
   const revealScreen = (checkId: CheckId, nodeIds: string[]) => {
     setNavError(null);
     revealGroup(checkId, nodeIds);
+  };
+  // "Preview Screen" — jump to the screen on the canvas (preview-aware SELECT_NODE, unchanged).
+  const previewScreen = (screenId: string) => {
+    setNavError(null);
+    send({ type: "SELECT_NODE", nodeId: screenId });
   };
   const revealCause = (causeId: string, checkId: CheckId, nodeIds: string[]) => {
     setRevealingCauseId(causeId);
@@ -271,26 +276,14 @@ export function App() {
       {meta && (
         <header style={styles.complete}>
           <div>
-            {previewActive ? (
-              <>
-                <p style={styles.previewTitle}>👁 {LANGUAGE_LABEL[meta.language]} Preview Ready</p>
-                <p style={styles.context}>Review localization issues below.</p>
-                <p style={styles.context}>
-                  Use Reveal to inspect problems directly on the canvas.
-                </p>
-              </>
-            ) : (
-              <>
-                <p style={styles.completeTitle}>
-                  ✓ {LANGUAGE_LABEL[meta.language]} version analyzed
-                </p>
-                <p style={styles.completeMeta}>
-                  {meta.screens} screen{meta.screens === 1 ? "" : "s"} ·{" "}
-                  {meta.strings.toLocaleString()} strings translated ·{" "}
-                  {report?.summary.totalIssues ?? 0} localization issue
-                  {(report?.summary.totalIssues ?? 0) === 1 ? "" : "s"}
-                </p>
-              </>
+            <p style={styles.completeTitle}>✓ Analysis Complete</p>
+            <p style={styles.completeMeta}>
+              {LANGUAGE_LABEL[meta.language]} · {screenViews.length} Screen
+              {screenViews.length === 1 ? "" : "s"} · {report?.summary.totalIssues ?? 0} Finding
+              {(report?.summary.totalIssues ?? 0) === 1 ? "" : "s"}
+            </p>
+            {previewActive && (
+              <p style={styles.previewTitle}>👁 Previewing {LANGUAGE_LABEL[meta.language]}</p>
             )}
           </div>
           <div style={styles.completeActions}>
@@ -354,7 +347,11 @@ export function App() {
               </div>
 
               {reviewMode === "screens" ? (
-                <ScreensView views={screenViews} onReveal={revealScreen} />
+                <ScreensView
+                  views={screenViews}
+                  onReveal={revealScreen}
+                  onPreviewScreen={previewScreen}
+                />
               ) : (
                 <RootCausePanel
                   rootCauses={report.rootCauses}
@@ -388,7 +385,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderBottom: "1px solid var(--figma-color-border, #e5e5e5)",
   },
   completeTitle: { fontSize: 13, fontWeight: 600, margin: 0, color: "#2f9e44" },
-  previewTitle: { fontSize: 13, fontWeight: 600, margin: 0, color: "var(--figma-color-text-brand, #0d99ff)" },
+  previewTitle: { fontSize: 11, fontWeight: 500, margin: "3px 0 0", color: "var(--figma-color-text-brand, #0d99ff)" },
   context: { fontSize: 11, opacity: 0.65, margin: "2px 0 0", lineHeight: 1.4 },
   completeMeta: { fontSize: 11, opacity: 0.7, margin: "2px 0 0" },
   completeActions: { display: "flex", gap: 4, flexWrap: "wrap", alignItems: "center", marginTop: 2 },

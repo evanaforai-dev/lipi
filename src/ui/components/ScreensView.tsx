@@ -2,83 +2,68 @@ import { useState } from "react";
 import type { CheckId } from "../../shared/types";
 import type { ScreenView } from "../screenViewModel";
 
-// Screen-first review. Collapsed rows summarise WHAT is wrong (category names + a soft status),
-// not how many. Expanding groups issues by type, each with a prominent recommendation and a
-// Reveal action. Pure view over the frozen Report — see screenViewModel.ts.
+// Screen-first review. A card per screen reads like a design-review note: the screen name, how
+// many findings, and a preview of them. Expanding shows each finding in plain language with a
+// Reveal action. No categories, scores, or severity. Pure view over the frozen Report.
 export function ScreensView({
   views,
   onReveal,
+  onPreviewScreen,
 }: {
   views: ScreenView[];
   onReveal: (checkId: CheckId, nodeIds: string[]) => void;
+  onPreviewScreen: (screenId: string) => void;
 }) {
-  // Collapsed by default: the summary list is the first thing you read, drill in on demand.
   const [openId, setOpenId] = useState<string | null>(null);
 
   return (
     <div style={styles.list}>
       {views.map((screen) => {
-        const open = screen.hasIssues && openId === screen.screenId;
+        const open = openId === screen.screenId;
         return (
-          <div key={screen.screenId} style={styles.screen}>
+          <section key={screen.screenId} style={styles.card}>
             <button
               style={styles.head}
-              onClick={() => screen.hasIssues && setOpenId(open ? null : screen.screenId)}
-              disabled={!screen.hasIssues}
+              onClick={() => setOpenId(open ? null : screen.screenId)}
+              title={open ? "Collapse" : "Show findings"}
             >
-              <span style={styles.headText}>
-                <span style={styles.name}>{screen.screenName}</span>
-                <span style={styles.summary}>{screen.summary}</span>
+              <span style={styles.name}>{screen.screenName}</span>
+              <span style={styles.count}>
+                {screen.findingCount} finding{screen.findingCount === 1 ? "" : "s"}
               </span>
-              <span
-                style={{ ...styles.status, ...(screen.hasIssues ? styles.statusAttn : styles.statusClear) }}
-              >
-                {screen.status}
-              </span>
-              {screen.hasIssues && <span style={styles.chevron}>{open ? "⌄" : "›"}</span>}
+              <span style={styles.chevron}>{open ? "⌄" : "›"}</span>
             </button>
 
-            {open && (
-              <div style={styles.detail}>
-                {screen.groups.map((group) => (
-                  <section key={group.checkId} style={styles.group}>
-                    <div style={styles.groupHead}>
-                      <span style={styles.category}>{group.category}</span>
-                      <span style={styles.affected}>
-                        {group.items.length} affected layer{group.items.length === 1 ? "" : "s"}
-                      </span>
-                    </div>
-                    <p style={styles.recommendation}>{group.recommendation}</p>
+            {open ? (
+              <div style={styles.findings}>
+                {screen.findings.map(({ issue, title, explanation }) => (
+                  <div key={issue.id} style={styles.finding}>
+                    <span style={styles.findingTitle}>{title}</span>
+                    <span style={styles.findingText}>{explanation}</span>
                     <button
-                      style={styles.revealPrimary}
-                      onClick={() => onReveal(group.checkId, group.nodeIds)}
+                      style={styles.reveal}
+                      onClick={() => onReveal(issue.checkId, [issue.nodeId])}
                     >
-                      Reveal instances
+                      Reveal on Canvas
                     </button>
-
-                    <div style={styles.rows}>
-                      {group.items.map(({ issue, problem }) => (
-                        <div key={issue.id} style={styles.row}>
-                          <span style={styles.rowText}>
-                            <span style={styles.layer} title={issue.nodeName}>
-                              {issue.nodeName}
-                            </span>
-                            <span style={styles.problem}>{problem}</span>
-                          </span>
-                          <button
-                            style={styles.revealGhost}
-                            onClick={() => onReveal(issue.checkId, [issue.nodeId])}
-                          >
-                            Reveal
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
+                  </div>
                 ))}
               </div>
+            ) : (
+              <ul style={styles.preview}>
+                {screen.findings.map(({ issue, title }) => (
+                  <li key={issue.id} style={styles.previewItem}>
+                    <span style={styles.bullet}>•</span>
+                    {title}
+                  </li>
+                ))}
+              </ul>
             )}
-          </div>
+
+            <button style={styles.previewBtn} onClick={() => onPreviewScreen(screen.screenId)}>
+              Preview Screen
+            </button>
+          </section>
         );
       })}
     </div>
@@ -86,14 +71,21 @@ export function ScreensView({
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  list: { display: "flex", flexDirection: "column" },
-  screen: { borderBottom: "1px solid var(--figma-color-border, #ececec)" },
+  list: { display: "flex", flexDirection: "column", gap: 14 },
+  card: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 10,
+    padding: "14px 14px 12px",
+    borderRadius: 10,
+    background: "var(--figma-color-bg-secondary, #f7f7f7)",
+  },
   head: {
     display: "flex",
     alignItems: "center",
-    gap: 12,
+    gap: 10,
     width: "100%",
-    padding: "14px 4px",
+    padding: 0,
     border: "none",
     background: "transparent",
     color: "inherit",
@@ -101,51 +93,45 @@ const styles: Record<string, React.CSSProperties> = {
     textAlign: "left",
     font: "inherit",
   },
-  headText: { display: "flex", flexDirection: "column", gap: 3, minWidth: 0, flex: 1 },
-  name: { fontSize: 14, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-  summary: {
-    fontSize: 11,
-    opacity: 0.55,
+  name: {
+    fontSize: 15,
+    fontWeight: 600,
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
+    flex: 1,
+    minWidth: 0,
   },
-  status: { fontSize: 11, fontWeight: 500, flex: "0 0 auto" },
-  statusAttn: { color: "var(--figma-color-text-warning, #b76e00)" },
-  statusClear: { color: "var(--figma-color-text-success, #338a4d)", opacity: 0.8 },
-  chevron: { fontSize: 14, opacity: 0.4, flex: "0 0 auto", width: 10, textAlign: "center" },
-  detail: { display: "flex", flexDirection: "column", gap: 20, padding: "4px 4px 20px" },
-  group: { display: "flex", flexDirection: "column", gap: 6 },
-  groupHead: { display: "flex", alignItems: "baseline", gap: 8 },
-  category: { fontSize: 12, fontWeight: 600 },
-  affected: { fontSize: 11, opacity: 0.5 },
-  recommendation: { fontSize: 12.5, lineHeight: 1.45, margin: 0, opacity: 0.9 },
-  revealPrimary: {
-    alignSelf: "flex-start",
+  count: { fontSize: 12, opacity: 0.55, flex: "0 0 auto" },
+  chevron: { fontSize: 15, opacity: 0.4, flex: "0 0 auto", width: 10, textAlign: "center" },
+  preview: { listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 5 },
+  previewItem: { display: "flex", gap: 8, fontSize: 12.5, opacity: 0.75, lineHeight: 1.4 },
+  bullet: { flex: "0 0 auto", opacity: 0.5 },
+  findings: { display: "flex", flexDirection: "column", gap: 14 },
+  finding: { display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" },
+  findingTitle: { fontSize: 13, fontWeight: 600 },
+  findingText: { fontSize: 12, opacity: 0.7, lineHeight: 1.45 },
+  reveal: {
+    marginTop: 4,
     fontSize: 11,
     fontWeight: 600,
-    padding: "6px 14px",
+    padding: "5px 12px",
     borderRadius: 7,
     border: "none",
     background: "var(--figma-color-bg-brand, #0d99ff)",
     color: "var(--figma-color-text-onbrand, #fff)",
     cursor: "pointer",
-    marginTop: 2,
   },
-  rows: { display: "flex", flexDirection: "column", marginTop: 6 },
-  row: { display: "flex", alignItems: "center", gap: 10, padding: "6px 0" },
-  rowText: { display: "flex", flexDirection: "column", gap: 1, minWidth: 0, flex: 1 },
-  layer: { fontSize: 12, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
-  problem: { fontSize: 11, opacity: 0.6, lineHeight: 1.4 },
-  revealGhost: {
-    flex: "0 0 auto",
+  previewBtn: {
+    alignSelf: "flex-start",
     fontSize: 11,
-    padding: "4px 10px",
-    borderRadius: 6,
-    border: "none",
-    background: "transparent",
-    color: "var(--figma-color-text-brand, #0d99ff)",
     fontWeight: 600,
+    padding: "6px 12px",
+    borderRadius: 7,
+    border: "1px solid var(--figma-color-border, #d5d5d5)",
+    background: "var(--figma-color-bg, #fff)",
+    color: "inherit",
     cursor: "pointer",
+    marginTop: 2,
   },
 };
