@@ -274,34 +274,51 @@ export function App() {
   return (
     <main style={styles.root}>
       {meta && (
-        <header style={styles.complete}>
-          <div>
-            <p style={styles.completeTitle}>✓ Analysis Complete</p>
-            <p style={styles.completeMeta}>
-              {LANGUAGE_LABEL[meta.language]} · {screenViews.length} Screen
-              {screenViews.length === 1 ? "" : "s"} · {report?.summary.totalIssues ?? 0} Finding
-              {(report?.summary.totalIssues ?? 0) === 1 ? "" : "s"}
-            </p>
-            {previewActive && (
-              <p style={styles.previewTitle}>👁 Previewing {LANGUAGE_LABEL[meta.language]}</p>
-            )}
-          </div>
+        <header style={previewActive ? { ...styles.complete, ...styles.completePreview } : styles.complete}>
+          {previewActive ? (
+            <div style={styles.previewPill}>
+              <span style={styles.pillTitle}>👁 Preview Active</span>
+              <span style={styles.pillMeta}>{LANGUAGE_LABEL[meta.language]} Preview</span>
+              <span style={styles.pillMeta}>
+                {meta.screens} Screen{meta.screens === 1 ? "" : "s"} Localized
+              </span>
+            </div>
+          ) : (
+            <div>
+              <p style={styles.completeTitle}>✓ Analysis Complete</p>
+              <p style={styles.completeMeta}>
+                {LANGUAGE_LABEL[meta.language]} · {screenViews.length} Screen
+                {screenViews.length === 1 ? "" : "s"} · {report?.summary.totalIssues ?? 0} Finding
+                {(report?.summary.totalIssues ?? 0) === 1 ? "" : "s"}
+              </p>
+            </div>
+          )}
           <div style={styles.completeActions}>
             {previewActive ? (
-              <button style={styles.tertiaryBtn} onClick={exitPreview}>
-                Exit Preview
-              </button>
+              <>
+                <button style={styles.secondaryBtn} onClick={exitPreview}>
+                  Exit Preview
+                </button>
+                <button style={styles.primaryBtn} onClick={exportLocalized}>
+                  Export
+                </button>
+                <button style={styles.tertiaryBtn} onClick={newAnalysis} title="Reset and start over">
+                  New Analysis
+                </button>
+              </>
             ) : (
-              <button style={styles.tertiaryBtn} onClick={enterPreview}>
-                Preview
-              </button>
+              <>
+                <button style={styles.tertiaryBtn} onClick={enterPreview}>
+                  Preview
+                </button>
+                <button style={styles.secondaryBtn} onClick={exportLocalized}>
+                  Export Localized Screens
+                </button>
+                <button style={styles.tertiaryBtn} onClick={newAnalysis} title="Reset and start over">
+                  New Analysis
+                </button>
+              </>
             )}
-            <button style={styles.secondaryBtn} onClick={exportLocalized}>
-              Export Localized Screens
-            </button>
-            <button style={styles.tertiaryBtn} onClick={newAnalysis} title="Reset and start over">
-              New Analysis
-            </button>
           </div>
           {notice && <p style={styles.completeMeta}>{notice}</p>}
         </header>
@@ -388,7 +405,34 @@ const styles: Record<string, React.CSSProperties> = {
   previewTitle: { fontSize: 11, fontWeight: 500, margin: "3px 0 0", color: "var(--figma-color-text-brand, #0d99ff)" },
   context: { fontSize: 11, opacity: 0.65, margin: "2px 0 0", lineHeight: 1.4 },
   completeMeta: { fontSize: 11, opacity: 0.7, margin: "2px 0 0" },
+  // Preview state — visually distinct: brand-accented header + a subtle colored status pill.
+  completePreview: {
+    background: "var(--figma-color-bg-brand-tertiary, #edf5ff)",
+    borderBottom: "2px solid var(--figma-color-border-brand, #0d99ff)",
+  },
+  previewPill: {
+    display: "inline-flex",
+    flexDirection: "column",
+    gap: 1,
+    alignSelf: "flex-start",
+    padding: "7px 12px",
+    borderRadius: 10,
+    background: "var(--figma-color-bg-brand, #0d99ff)",
+    color: "var(--figma-color-text-onbrand, #fff)",
+  },
+  pillTitle: { fontSize: 12, fontWeight: 700, letterSpacing: 0.2 },
+  pillMeta: { fontSize: 11, opacity: 0.9 },
   completeActions: { display: "flex", gap: 4, flexWrap: "wrap", alignItems: "center", marginTop: 2 },
+  primaryBtn: {
+    fontSize: 11,
+    fontWeight: 600,
+    padding: "5px 14px",
+    borderRadius: 7,
+    border: "none",
+    background: "var(--figma-color-bg-brand, #0d99ff)",
+    color: "var(--figma-color-text-onbrand, #fff)",
+    cursor: "pointer",
+  },
   secondaryBtn: {
     fontSize: 11,
     fontWeight: 600,
