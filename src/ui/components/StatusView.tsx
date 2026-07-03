@@ -22,7 +22,7 @@ export function StatusView({
   onSecondary?: () => void;
 }) {
   return (
-    <div style={styles.wrap}>
+    <div className="lpt-page" style={styles.wrap}>
       <div style={{ ...styles.badge, ...TONE[tone] }}>{icon}</div>
       <h2 style={styles.title}>{title}</h2>
       <p style={styles.desc}>{description}</p>
@@ -60,7 +60,7 @@ export function StatusBanner({
   onDismiss: () => void;
 }) {
   return (
-    <div style={styles.banner}>
+    <div className="lpt-reveal" style={styles.banner}>
       <span style={styles.bannerIcon}>{icon}</span>
       <span style={styles.bannerText}>
         <span style={styles.bannerTitle}>{title}</span>

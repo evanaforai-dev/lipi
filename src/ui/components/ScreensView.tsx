@@ -21,7 +21,7 @@ export function ScreensView({
       {views.map((screen) => {
         const open = openId === screen.screenId;
         return (
-          <section key={screen.screenId} style={styles.card}>
+          <section key={screen.screenId} className="lpt-card" style={styles.card}>
             <button
               style={styles.head}
               onClick={() => setOpenId(open ? null : screen.screenId)}
@@ -31,11 +31,16 @@ export function ScreensView({
               <span style={styles.count}>
                 {screen.findingCount} finding{screen.findingCount === 1 ? "" : "s"}
               </span>
-              <span style={styles.chevron}>{open ? "⌄" : "›"}</span>
+              <span
+                className="lpt-chevron"
+                style={{ ...styles.chevron, transform: open ? "rotate(90deg)" : "none" }}
+              >
+                ›
+              </span>
             </button>
 
             {open ? (
-              <div style={styles.findings}>
+              <div className="lpt-reveal" style={styles.findings}>
                 {screen.findings.map(({ issue, title, explanation }) => (
                   <div key={issue.id} style={styles.finding}>
                     <span style={styles.findingTitle}>{title}</span>

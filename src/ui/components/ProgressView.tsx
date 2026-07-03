@@ -14,7 +14,10 @@ export function ProgressView({ status }: { status: Record<Stage, StageState> }) 
           const s = status[stage];
           return (
             <div key={stage} style={{ ...styles.row, opacity: s === "pending" ? 0.4 : 1 }}>
-              <span style={{ ...styles.mark, ...(s === "done" ? styles.markDone : null) }}>
+              <span
+                className="lpt-mark"
+                style={{ ...styles.mark, ...(s === "done" ? styles.markDone : null) }}
+              >
                 {s === "done" ? "✓" : s === "active" ? "•" : "○"}
               </span>
               <span style={{ fontWeight: s === "active" ? 600 : 400 }}>{STAGE_LABEL[stage]}</span>

@@ -265,7 +265,7 @@ export function App() {
   // ── Render ──────────────────────────────────────────────────────────────────
   if (phase === "generate") {
     return (
-      <main style={styles.root}>
+      <main key={phase} className="lpt-page" style={styles.root}>
         <GenerateView
           selectedLangs={selectedLangs}
           providerId={providerId}
@@ -283,7 +283,7 @@ export function App() {
 
   if (phase === "generating") {
     return (
-      <main style={styles.root}>
+      <main key={phase} className="lpt-page" style={styles.root}>
         <ProgressView status={stageStatus} />
       </main>
     );
@@ -291,9 +291,12 @@ export function App() {
 
   // phase === "advisor"
   return (
-    <main style={styles.root}>
+    <main key={phase} className="lpt-page" style={styles.root}>
       {meta && (
-        <header style={previewActive ? { ...styles.complete, ...styles.completePreview } : styles.complete}>
+        <header
+          className="lpt-header"
+          style={previewActive ? { ...styles.complete, ...styles.completePreview } : styles.complete}
+        >
           {previewActive ? (
             <div style={styles.previewPill}>
               <span style={styles.pillTitle}>👁 Preview Active</span>
