@@ -62,6 +62,8 @@ export function App() {
   >(null);
   // Review lens: screen-first (per-screen findings) vs system-level (root-cause / component fixes).
   const [reviewMode, setReviewMode] = useState<"screens" | "system">("screens");
+  // Which screen card is open — lifted so the Design System view can open a screen (two-way link).
+  const [openScreenId, setOpenScreenId] = useState<string | null>(null);
   // Languages still to run through the pipeline this analysis (order = selection order).
   const genQueue = useRef<Language[]>([]);
   const genStrings = useRef<string[]>([]);
@@ -216,7 +218,17 @@ export function App() {
     setNavError(null);
     setRevealingCauseId(null);
     setBanner(null);
+    setOpenScreenId(null);
     if (previewActive) send({ type: "PREVIEW_ENTER", language: lang });
+  };
+
+  // ── Two-way link between the views ──────────────────────────────────────────
+  const toggleScreen = (id: string) => setOpenScreenId((cur) => (cur === id ? null : id));
+  const openSystemView = () => setReviewMode("system"); // a screen problem → its systemic fix
+  const openScreenFromSystem = (frameId: string) => {
+    // a system fix → where it appears
+    setReviewMode("screens");
+    setOpenScreenId(frameId);
   };
 
   // In-app reset: return to the initial language screen without reopening the plugin. Restores
@@ -229,6 +241,7 @@ export function App() {
     setPreviewLang(null);
     setSelectedLangs(["hi"]); // clear language selection back to the fresh-open default
     genQueue.current = [];
+    setOpenScreenId(null);
     setBanner(null);
     setNavError(null);
     setGenError(null);
@@ -434,8 +447,11 @@ export function App() {
               {reviewMode === "screens" ? (
                 <ScreensView
                   views={screenViews}
+                  openId={openScreenId}
+                  onToggleScreen={toggleScreen}
                   onReveal={revealScreen}
                   onPreviewScreen={previewScreen}
+                  onSeeFix={openSystemView}
                 />
               ) : (
                 <RootCausePanel
@@ -445,6 +461,7 @@ export function App() {
                   onReveal={revealCause}
                   onExitReveal={exitReveal}
                   onGoToComponent={goToComponent}
+                  onOpenScreen={openScreenFromSystem}
                 />
               )}
             </div>

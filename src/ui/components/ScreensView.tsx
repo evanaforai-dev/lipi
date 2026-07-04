@@ -2,19 +2,24 @@ import { useState } from "react";
 import type { CheckId } from "../../shared/types";
 import type { ScreenView } from "../screenViewModel";
 
-// Screen-first review as a quiet tree: screen → problem type → layers. Each problem is listed
-// once with a single recommendation; the individual layers disclose on demand. Scales to
-// hundreds of issues because density grows with problem TYPES, not issue volume.
+// Screen-first triage as a quiet tree: screen → problem type → layers. Pure "what & where" —
+// the fix lives once in Design System, reached via "See the fix". Density grows with problem
+// TYPES, not issue volume, so it stays calm at 150+ issues.
 export function ScreensView({
   views,
+  openId,
+  onToggleScreen,
   onReveal,
   onPreviewScreen,
+  onSeeFix,
 }: {
   views: ScreenView[];
+  openId: string | null;
+  onToggleScreen: (screenId: string) => void;
   onReveal: (checkId: CheckId, nodeIds: string[]) => void;
   onPreviewScreen: (screenId: string) => void;
+  onSeeFix: () => void;
 }) {
-  const [openId, setOpenId] = useState<string | null>(null);
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
   const toggleGroup = (key: string) =>
     setOpenGroups((prev) => {
@@ -37,7 +42,7 @@ export function ScreensView({
             <div style={styles.head}>
               <button
                 style={styles.headToggle}
-                onClick={() => setOpenId(open ? null : screen.screenId)}
+                onClick={() => onToggleScreen(screen.screenId)}
                 title={open ? "Collapse" : "Show findings"}
               >
                 <span style={styles.headText}>
@@ -75,7 +80,7 @@ export function ScreensView({
                         {collapsible ? (
                           <button style={styles.groupToggle} onClick={() => toggleGroup(gkey)}>
                             <span style={styles.groupLabel}>{group.label}</span>
-                            <span style={styles.groupCount}>· {group.layers.length}</span>
+                            <span style={styles.groupCount}>({group.layers.length})</span>
                             <span
                               className="lpt-chevron"
                               style={{
@@ -89,7 +94,7 @@ export function ScreensView({
                         ) : (
                           <span style={styles.groupToggle}>
                             <span style={styles.groupLabel}>{group.label}</span>
-                            <span style={styles.groupCount}>· {group.layers.length}</span>
+                            <span style={styles.groupCount}>({group.layers.length})</span>
                           </span>
                         )}
                         <button
@@ -101,25 +106,29 @@ export function ScreensView({
                         </button>
                       </div>
 
-                      <p style={styles.groupRec}>{group.recommendation}</p>
-
                       {showLayers && (
-                        <div style={styles.layers}>
-                          {group.layers.map(({ issue, name, detail }) => (
-                            <div key={issue.id} style={styles.layer}>
-                              <span style={styles.layerName} title={name}>
-                                {name}
-                              </span>
-                              {detail && <span style={styles.layerDetail}>{detail}</span>}
-                              <button
-                                className="lpt-reveal-link"
-                                onClick={() => onReveal(issue.checkId, [issue.nodeId])}
-                              >
-                                <span aria-hidden="true">◎</span> Reveal
-                              </button>
-                            </div>
-                          ))}
-                        </div>
+                        <>
+                          <div style={styles.layers}>
+                            {group.layers.map(({ issue, name, detail }) => (
+                              <div key={issue.id} style={styles.layer}>
+                                <span style={styles.layerName} title={name}>
+                                  {name}
+                                </span>
+                                {detail && <span style={styles.layerDetail}>{detail}</span>}
+                                <button
+                                  className="lpt-reveal-link"
+                                  onClick={() => onReveal(issue.checkId, [issue.nodeId])}
+                                >
+                                  <span aria-hidden="true">◎</span> Reveal
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                          {/* Connection to the system view — the fix lives there, once. */}
+                          <button style={styles.seeFix} onClick={onSeeFix}>
+                            See the fix →
+                          </button>
+                        </>
                       )}
                     </div>
                   );
@@ -197,7 +206,6 @@ const styles: Record<string, React.CSSProperties> = {
   groupLabel: { fontSize: 13, fontWeight: 600 },
   groupCount: { fontSize: 12, opacity: 0.5 },
   groupChevron: { fontSize: 13, opacity: 0.4, marginLeft: 2 },
-  groupRec: { fontSize: 12, color: "var(--figma-color-text-secondary, #7a7a7a)", lineHeight: 1.45, margin: 0 },
 
   // Level 3 — layers
   layers: { display: "flex", flexDirection: "column", marginTop: 4, paddingLeft: 2 },
@@ -222,5 +230,16 @@ const styles: Record<string, React.CSSProperties> = {
     color: "var(--figma-color-text-secondary, #7a7a7a)",
     fontVariantNumeric: "tabular-nums",
     flex: "0 0 auto",
+  },
+  seeFix: {
+    alignSelf: "flex-start",
+    marginTop: 8,
+    padding: 0,
+    border: "none",
+    background: "transparent",
+    color: "var(--figma-color-text-brand, #0d99ff)",
+    fontSize: 11,
+    fontWeight: 600,
+    cursor: "pointer",
   },
 };

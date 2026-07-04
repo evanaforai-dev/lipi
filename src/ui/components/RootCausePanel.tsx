@@ -1,14 +1,14 @@
 import { useState } from "react";
 import type { CheckId, Issue, RootCause } from "../../shared/types";
 
-const SEEN_LIMIT = 2;
+const SEEN_LIMIT = 3;
 
 // Softer reach copy: "Fix once, improves 6 screens" → "One update improves 6 screens".
 const oneUpdate = (impact: string) => impact.replace(/fix once,?\s*/i, "One update ");
 
-// Native-inspector shape: the always-visible face answers "what to do", "how much it helps",
-// and offers the two actions (jump to component, reveal) — no reading required. The evidence
-// (explanation, why it works, affects, example) sits behind a single "Why?" disclosure.
+// Native-inspector shape. Face = decide-fast only: recommendation, one-line description, reach,
+// and the primary action (jump to component). Everything else (why it works, where it appears,
+// reveal) sits behind "Why?". "Appears in" links back to the Screen view (the two-way link).
 export function RootCausePanel({
   rootCauses,
   issueById,
@@ -16,6 +16,7 @@ export function RootCausePanel({
   onReveal,
   onExitReveal,
   onGoToComponent,
+  onOpenScreen,
 }: {
   rootCauses: RootCause[];
   issueById: Map<string, Issue>;
@@ -23,6 +24,7 @@ export function RootCausePanel({
   onReveal: (causeId: string, checkId: CheckId, nodeIds: string[]) => void;
   onExitReveal: () => void;
   onGoToComponent: (componentId: string) => void;
+  onOpenScreen: (frameId: string) => void;
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   if (rootCauses.length === 0) return null;
@@ -38,13 +40,15 @@ export function RootCausePanel({
         const dominant = rc.evidence[0]?.checkId ?? "overflow";
         const members = rc.issueIds.map((id) => issueById.get(id)).filter((i): i is Issue => !!i);
         const nodeIds = [...new Set(members.map((i) => i.nodeId))];
-        const affects = [
-          ...new Set(members.map((i) => i.frameName ?? i.pageName).filter((n): n is string => !!n)),
-        ].slice(0, SEEN_LIMIT);
-        const ex = members[0];
-        const example = ex
-          ? [...new Set([ex.frameName, ex.componentName, ex.nodeName].filter((p): p is string => !!p))].join(" → ")
-          : null;
+        // Where it appears — unique screens, navigable back to the Screen view.
+        const seen = new Set<string>();
+        const appears: { frameId: string; name: string }[] = [];
+        for (const m of members) {
+          if (m.frameId && !seen.has(m.frameId)) {
+            seen.add(m.frameId);
+            appears.push({ frameId: m.frameId, name: m.frameName ?? m.pageName ?? "Screen" });
+          }
+        }
         const revealing = revealingCauseId === rc.id;
 
         return (
@@ -52,54 +56,58 @@ export function RootCausePanel({
             <div style={styles.face}>
               <div style={styles.kicker}>{fix.pattern}</div>
               <div style={styles.title}>{fix.title}</div>
+              <div style={styles.desc}>{fix.description}</div>
               <div style={styles.metaRow}>
                 <span style={styles.impact}>{oneUpdate(fix.expectedImpact)}</span>
-                <button
-                  style={styles.whyToggle}
-                  onClick={() => setExpandedId(open ? null : rc.id)}
-                >
+                <button style={styles.whyToggle} onClick={() => setExpandedId(open ? null : rc.id)}>
                   {open ? "Hide" : "Why?"}
                 </button>
               </div>
               {resolved && <div style={styles.verify}>{rc.resolvedCount} fixed since last check</div>}
-
-              <div style={styles.actions}>
-                {componentId && (
-                  <button
-                    className="lpt-btn lpt-btn-secondary lpt-btn-sm"
-                    onClick={() => onGoToComponent(componentId)}
-                  >
-                    Go to component
-                  </button>
-                )}
+              {componentId && (
                 <button
-                  className="lpt-reveal-link"
-                  onClick={() => (revealing ? onExitReveal() : onReveal(rc.id, dominant, nodeIds))}
+                  className="lpt-btn lpt-btn-secondary lpt-btn-sm"
+                  style={{ alignSelf: "flex-start", marginTop: 4 }}
+                  onClick={() => onGoToComponent(componentId)}
                 >
-                  {revealing ? "Hide" : <><span aria-hidden="true">◎</span> Reveal</>}
+                  Go to component
                 </button>
-              </div>
+              )}
             </div>
 
             {open && (
               <div style={styles.expanded}>
-                <p style={styles.explain}>{fix.description}</p>
                 <div style={styles.row}>
                   <span style={styles.rowLabel}>Why this works</span>
                   <span style={styles.rowValue}>{fix.justification}</span>
                 </div>
-                {affects.length > 0 && (
+                {appears.length > 0 && (
                   <div style={styles.row}>
-                    <span style={styles.rowLabel}>Affects</span>
-                    <span style={styles.rowValue}>{affects.join(", ")}</span>
+                    <span style={styles.rowLabel}>Appears in</span>
+                    <span style={styles.chips}>
+                      {appears.slice(0, SEEN_LIMIT).map((a) => (
+                        <button
+                          key={a.frameId}
+                          style={styles.chip}
+                          onClick={() => onOpenScreen(a.frameId)}
+                          title="Open this screen"
+                        >
+                          {a.name}
+                        </button>
+                      ))}
+                      {appears.length > SEEN_LIMIT && (
+                        <span style={styles.more}>+{appears.length - SEEN_LIMIT} more</span>
+                      )}
+                    </span>
                   </div>
                 )}
-                {example && (
-                  <div style={styles.row}>
-                    <span style={styles.rowLabel}>Example</span>
-                    <span style={styles.rowValue}>{example}</span>
-                  </div>
-                )}
+                <button
+                  className="lpt-reveal-link"
+                  style={{ alignSelf: "flex-start" }}
+                  onClick={() => (revealing ? onExitReveal() : onReveal(rc.id, dominant, nodeIds))}
+                >
+                  {revealing ? "Hide" : <><span aria-hidden="true">◎</span> Reveal on canvas</>}
+                </button>
               </div>
             )}
           </div>
@@ -112,12 +120,7 @@ export function RootCausePanel({
 const styles: Record<string, React.CSSProperties> = {
   panel: { display: "flex", flexDirection: "column", margin: "4px 0 8px" },
   card: { borderBottom: "1px solid var(--figma-color-border, #ececec)" },
-  face: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 6,
-    padding: "14px 4px",
-  },
+  face: { display: "flex", flexDirection: "column", gap: 6, padding: "14px 4px" },
   kicker: {
     fontSize: 10,
     fontWeight: 600,
@@ -126,6 +129,7 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: 0.5,
   },
   title: { fontSize: 14, fontWeight: 600, lineHeight: 1.3 },
+  desc: { fontSize: 12, color: "var(--figma-color-text-secondary, #7a7a7a)", lineHeight: 1.45 },
   metaRow: { display: "flex", alignItems: "baseline", gap: 8 },
   impact: { fontSize: 12, opacity: 0.7, flex: 1, minWidth: 0 },
   whyToggle: {
@@ -139,14 +143,7 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
   },
   verify: { fontSize: 11, color: "#2f9e44", opacity: 0.9 },
-  actions: { display: "flex", alignItems: "center", gap: 8, marginTop: 4 },
   expanded: { display: "flex", flexDirection: "column", gap: 10, padding: "0 4px 16px" },
-  explain: {
-    fontSize: 12,
-    color: "var(--figma-color-text-secondary, #7a7a7a)",
-    lineHeight: 1.45,
-    margin: 0,
-  },
   row: { display: "flex", gap: 10, alignItems: "baseline" },
   rowLabel: {
     flex: "0 0 auto",
@@ -157,4 +154,16 @@ const styles: Record<string, React.CSSProperties> = {
     opacity: 0.5,
   },
   rowValue: { fontSize: 11, opacity: 0.75, lineHeight: 1.45, minWidth: 0 },
+  chips: { display: "flex", flexWrap: "wrap", gap: 6, minWidth: 0 },
+  chip: {
+    fontSize: 11,
+    fontWeight: 500,
+    padding: "2px 8px",
+    borderRadius: 6,
+    border: "1px solid var(--figma-color-border, #d9d9d9)",
+    background: "transparent",
+    color: "var(--figma-color-text-brand, #0d99ff)",
+    cursor: "pointer",
+  },
+  more: { fontSize: 11, opacity: 0.5, alignSelf: "center" },
 };

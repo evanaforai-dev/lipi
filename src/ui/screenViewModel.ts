@@ -1,24 +1,17 @@
 import type { CheckId, Issue, Report } from "../shared/types";
 
-// PRESENTATION LAYER ONLY. Reshapes the frozen Report into a screen → problem → layer tree so
-// the Screen tab scales to hundreds of issues: each problem TYPE is listed once with a single
-// recommendation, and the individual layers sit behind disclosure. Nothing in analysis changes.
+// PRESENTATION LAYER ONLY. Reshapes the frozen Report into a screen → problem → layer tree.
+// The Screen view is pure triage: what's wrong and where. The FIX (recommendation) lives once
+// in the Design System view, reached via a link — so advice is never repeated per screen.
 
+// Plain problem names — recognized, not read. Used for both the collapsed summary and groups.
 const TYPE_LABEL: Record<CheckId, string> = {
-  overflow: "Overflow",
-  "small-indic": "Small text",
-  "line-clip": "Clipping",
-  "missing-font": "Font support",
+  overflow: "Text overflow",
+  "small-indic": "Text too small",
+  "line-clip": "Clipped lines",
+  "missing-font": "Unsupported font",
 };
 const TYPE_ORDER: CheckId[] = ["overflow", "small-indic", "line-clip", "missing-font"];
-
-// One plain recommendation per problem type — shown once on the group, never per layer.
-const RECOMMENDATION: Record<CheckId, string> = {
-  overflow: "Let the container grow, or shorten the copy.",
-  "small-indic": "Increase the size so localized copy stays legible.",
-  "line-clip": "Add line height so tall characters aren't clipped.",
-  "missing-font": "Switch to a font that supports this language.",
-};
 
 export interface Layer {
   issue: Issue;
@@ -28,7 +21,6 @@ export interface Layer {
 export interface IssueGroup {
   checkId: CheckId;
   label: string;
-  recommendation: string;
   layers: Layer[];
   nodeIds: string[]; // affected layers, for the group-level "Reveal all"
 }
@@ -99,7 +91,6 @@ export function buildScreenViews(report: Report, issueById: Map<string, Issue>):
       return {
         checkId,
         label: TYPE_LABEL[checkId],
-        recommendation: RECOMMENDATION[checkId],
         layers,
         nodeIds: [...new Set(layers.map((l) => l.issue.nodeId))],
       };
