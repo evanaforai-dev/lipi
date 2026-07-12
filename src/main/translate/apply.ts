@@ -71,7 +71,9 @@ export async function applyTranslations(
 
   const range = SCRIPT_RANGE[language];
   const capable = SCRIPT_CAPABLE[language];
-  const plan: { node: TextNode; text: string; font: FontName }[] = [];
+  const key = (f: FontName) => `${f.family}__${f.style}`;
+  // Editing a text node requires BOTH its current font and the target font to be loadable.
+  const plan: { node: TextNode; text: string; current: FontName; font: FontName }[] = [];
   const fonts = new Map<string, FontName>();
 
   for (const node of nodes) {
@@ -80,17 +82,33 @@ export async function applyTranslations(
     const current = firstFontName(node);
     const needsFallback = containsScript(text, range) && !capable.has(current.family);
     const font = needsFallback ? FALLBACK_FONT[language] : current;
-    plan.push({ node, text, font });
-    fonts.set(`${font.family}__${font.style}`, font);
+    plan.push({ node, text, current, font });
+    fonts.set(key(current), current);
+    fonts.set(key(font), font);
   }
 
-  // Load every font we'll use before touching any characters.
-  await Promise.all([...fonts.values()].map((f) => figma.loadFontAsync(f)));
+  // Load every font we'll use. A font the document references but the environment can't
+  // provide (a missing/unavailable font) simply isn't marked loaded — we skip those nodes
+  // rather than letting one bad font throw and fail the whole run.
+  const loaded = new Set<string>();
+  await Promise.all(
+    [...fonts.entries()].map(async ([k, f]) => {
+      try {
+        await figma.loadFontAsync(f);
+        loaded.add(k);
+      } catch {
+        /* font unavailable in this environment — leave affected nodes as English */
+      }
+    }),
+  );
 
-  for (const { node, text, font } of plan) {
+  let touched = 0;
+  for (const { node, text, current, font } of plan) {
+    if (!loaded.has(key(current)) || !loaded.has(key(font))) continue; // can't safely edit
     node.fontName = font; // unify to one font (also applies the fallback) — variant only
     node.characters = text; // reflows immediately
+    touched++;
   }
 
-  return nodes.length;
+  return touched;
 }

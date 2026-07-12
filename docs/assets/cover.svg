@@ -1,0 +1,69 @@
+<svg width="1920" height="960" viewBox="0 0 1920 960" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .t { font-family: Inter, "Helvetica Neue", Arial, sans-serif; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1920" height="960" fill="#F5F8FD"/>
+  <circle cx="1620" cy="150" r="360" fill="#0D99FF" fill-opacity="0.06"/>
+
+  <!-- ── Left: copy ─────────────────────────────────────────────── -->
+  <text class="t" x="150" y="330" fill="#0D99FF" font-size="24" font-weight="700" letter-spacing="4">FIGMA PLUGIN</text>
+  <text class="t" x="146" y="418" fill="#132338" font-size="70" font-weight="800">Localization</text>
+  <text class="t" x="146" y="494" fill="#132338" font-size="70" font-weight="800">Pressure Test</text>
+  <text class="t" x="150" y="560" fill="#54627A" font-size="27" font-weight="400">See where translated copy breaks your layout —</text>
+  <text class="t" x="150" y="597" fill="#54627A" font-size="27" font-weight="400">before handoff. Preview, reveal, and fix.</text>
+
+  <!-- Problem chips -->
+  <g class="t" font-size="19" font-weight="600">
+    <rect x="150" y="648" width="132" height="40" rx="20" fill="#FFFFFF" stroke="#DCE4F0"/>
+    <text x="176" y="674" fill="#54627A">Overflow</text>
+    <rect x="296" y="648" width="150" height="40" rx="20" fill="#FFFFFF" stroke="#DCE4F0"/>
+    <text x="322" y="674" fill="#54627A">Small text</text>
+    <rect x="460" y="648" width="128" height="40" rx="20" fill="#FFFFFF" stroke="#DCE4F0"/>
+    <text x="486" y="674" fill="#54627A">Clipping</text>
+    <rect x="602" y="648" width="110" height="40" rx="20" fill="#FFFFFF" stroke="#DCE4F0"/>
+    <text x="628" y="674" fill="#54627A">Fonts</text>
+  </g>
+
+  <!-- ── Right: English → Localized ─────────────────────────────── -->
+  <!-- English phone -->
+  <g>
+    <rect x="1080" y="200" width="300" height="600" rx="34" fill="#FFFFFF" stroke="#E2E8F2" stroke-width="2"/>
+    <rect x="1210" y="222" width="40" height="8" rx="4" fill="#E2E8F2"/>
+    <rect x="1112" y="276" width="150" height="16" rx="8" fill="#132338"/>
+    <rect x="1112" y="322" width="180" height="10" rx="5" fill="#C9D3E1"/>
+    <rect x="1112" y="346" width="120" height="10" rx="5" fill="#C9D3E1"/>
+    <rect x="1112" y="404" width="236" height="10" rx="5" fill="#C9D3E1"/>
+    <rect x="1112" y="428" width="160" height="10" rx="5" fill="#C9D3E1"/>
+    <rect x="1112" y="700" width="236" height="44" rx="12" fill="#0D99FF"/>
+    <rect x="1176" y="718" width="108" height="8" rx="4" fill="#FFFFFF"/>
+    <text class="t" x="1230" y="838" fill="#8A97AC" font-size="20" font-weight="600" text-anchor="middle">English</text>
+  </g>
+
+  <!-- Arrow -->
+  <g stroke="#9AA7BC" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M1410 500 h64"/>
+    <path d="M1462 486 l14 14 l-14 14"/>
+  </g>
+
+  <!-- Localized phone (overflow highlighted) -->
+  <g>
+    <rect x="1500" y="200" width="300" height="600" rx="34" fill="#FFFFFF" stroke="#E2E8F2" stroke-width="2"/>
+    <rect x="1630" y="222" width="40" height="8" rx="4" fill="#E2E8F2"/>
+    <rect x="1532" y="276" width="196" height="16" rx="8" fill="#132338"/>
+    <rect x="1532" y="322" width="236" height="10" rx="5" fill="#C9D3E1"/>
+    <rect x="1532" y="346" width="176" height="10" rx="5" fill="#C9D3E1"/>
+
+    <!-- The line that overflows the frame -->
+    <rect x="1494" y="396" width="120" height="26" rx="6" fill="#FF9500" fill-opacity="0.20"/>
+    <rect x="1532" y="404" width="290" height="10" rx="5" fill="#132338"/>
+    <circle cx="1806" cy="409" r="12" fill="none" stroke="#FF9500" stroke-width="4"/>
+
+    <rect x="1532" y="700" width="236" height="44" rx="12" fill="#0D99FF"/>
+    <rect x="1596" y="718" width="108" height="8" rx="4" fill="#FFFFFF"/>
+    <text class="t" x="1650" y="838" fill="#0D99FF" font-size="20" font-weight="700" text-anchor="middle">Hindi</text>
+  </g>
+</svg>
