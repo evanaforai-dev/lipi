@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { CheckId } from "../../shared/types";
 import type { ScreenView } from "../screenViewModel";
+import { TYPE_COLOR } from "../screenViewModel";
 import { ArrowRightIcon, ChevronIcon, RevealIcon } from "./icons";
 
 // Screen-first triage as a quiet tree: screen → problem type → layers. Pure "what & where" —
@@ -46,18 +47,28 @@ export function ScreensView({
                 onClick={() => onToggleScreen(screen.screenId)}
                 title={open ? "Collapse" : "Show findings"}
               >
-                <span style={styles.headText}>
+                <span style={styles.headRow}>
                   <span style={styles.name}>{screen.screenName}</span>
-                  {!open && <span style={styles.summary}>{screen.typeSummary}</span>}
+                  <span style={styles.count}>
+                    <b style={styles.countNum}>{screen.findingCount}</b> finding
+                    {screen.findingCount === 1 ? "" : "s"}
+                  </span>
+                  <ChevronIcon
+                    size={14}
+                    className="lpt-chevron"
+                    style={{ opacity: 0.4, flex: "0 0 auto", transform: open ? "rotate(90deg)" : "none" }}
+                  />
                 </span>
-                <span style={styles.count}>
-                  {screen.findingCount} finding{screen.findingCount === 1 ? "" : "s"}
-                </span>
-                <ChevronIcon
-                  size={14}
-                  className="lpt-chevron"
-                  style={{ opacity: 0.45, transform: open ? "rotate(90deg)" : "none" }}
-                />
+                {!open && (
+                  <span style={styles.summary}>
+                    {screen.groups.map((g) => (
+                      <span key={g.checkId} style={styles.sumItem}>
+                        <span style={{ ...styles.dot, background: TYPE_COLOR[g.checkId] }} />
+                        {g.label}
+                      </span>
+                    ))}
+                  </span>
+                )}
               </button>
               <button
                 className="lpt-btn lpt-btn-ghost lpt-btn-sm lpt-row-action"
@@ -79,8 +90,9 @@ export function ScreensView({
                       <div style={styles.groupHead}>
                         {collapsible ? (
                           <button style={styles.groupToggle} onClick={() => toggleGroup(gkey)}>
+                            <span style={{ ...styles.dot, background: TYPE_COLOR[group.checkId] }} />
                             <span style={styles.groupLabel}>{group.label}</span>
-                            <span style={styles.groupCount}>({group.layers.length})</span>
+                            <span style={styles.groupCount}>{group.layers.length}</span>
                             <ChevronIcon
                               size={13}
                               className="lpt-chevron"
@@ -93,8 +105,9 @@ export function ScreensView({
                           </button>
                         ) : (
                           <span style={styles.groupToggle}>
+                            <span style={{ ...styles.dot, background: TYPE_COLOR[group.checkId] }} />
                             <span style={styles.groupLabel}>{group.label}</span>
-                            <span style={styles.groupCount}>({group.layers.length})</span>
+                            <span style={styles.groupCount}>{group.layers.length}</span>
                           </span>
                         )}
                         <button
@@ -146,20 +159,24 @@ export function ScreensView({
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  list: { display: "flex", flexDirection: "column", gap: 16 },
+  list: { display: "flex", flexDirection: "column", gap: 8 },
   card: {
     display: "flex",
     flexDirection: "column",
     gap: 8,
-    padding: "16px 16px 12px",
-    borderRadius: 8,
-    background: "var(--figma-color-bg-secondary, #f7f7f7)",
+    padding: "12px 14px",
+    borderRadius: 10,
+    background: "var(--figma-color-bg, #fff)",
+    border: "1px solid var(--figma-color-border, #e6e6e6)",
+    boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
   },
-  head: { display: "flex", alignItems: "center", gap: 8, width: "100%" },
+  head: { display: "flex", alignItems: "flex-start", gap: 8, width: "100%" },
+  dot: { flex: "0 0 auto", width: 6, height: 6, borderRadius: 3 },
+  sumItem: { display: "inline-flex", alignItems: "center", gap: 5 },
   headToggle: {
     display: "flex",
-    alignItems: "center",
-    gap: 8,
+    flexDirection: "column",
+    gap: 6,
     flex: 1,
     minWidth: 0,
     padding: 0,
@@ -170,22 +187,32 @@ const styles: Record<string, React.CSSProperties> = {
     textAlign: "left",
     font: "inherit",
   },
-  headText: { display: "flex", flexDirection: "column", gap: 2, flex: 1, minWidth: 0 },
+  headRow: { display: "flex", alignItems: "baseline", gap: 8, width: "100%" },
   name: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: 600,
+    flex: 1,
+    minWidth: 0,
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
   },
   summary: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 10,
     fontSize: 11,
-    opacity: 0.55,
+    color: "var(--figma-color-text-secondary, #7a7a7a)",
     overflow: "hidden",
-    textOverflow: "ellipsis",
     whiteSpace: "nowrap",
   },
-  count: { fontSize: 12, opacity: 0.55, flex: "0 0 auto" },
+  count: {
+    fontSize: 11,
+    color: "var(--figma-color-text-secondary, #8a8a8a)",
+    flex: "0 0 auto",
+    fontVariantNumeric: "tabular-nums",
+  },
+  countNum: { fontWeight: 600, color: "var(--figma-color-text, #333)" },
   chevron: { fontSize: 15, opacity: 0.4, flex: "0 0 auto", width: 10, textAlign: "center" },
 
   // Level 2 — problem groups
@@ -194,8 +221,8 @@ const styles: Record<string, React.CSSProperties> = {
   groupHead: { display: "flex", alignItems: "center", gap: 8 },
   groupToggle: {
     display: "flex",
-    alignItems: "baseline",
-    gap: 4,
+    alignItems: "center",
+    gap: 6,
     flex: 1,
     minWidth: 0,
     padding: 0,
@@ -207,7 +234,12 @@ const styles: Record<string, React.CSSProperties> = {
     font: "inherit",
   },
   groupLabel: { fontSize: 13, fontWeight: 600 },
-  groupCount: { fontSize: 12, opacity: 0.5 },
+  groupCount: {
+    fontSize: 11,
+    fontWeight: 600,
+    opacity: 0.5,
+    fontVariantNumeric: "tabular-nums",
+  },
   groupChevron: { fontSize: 13, opacity: 0.4, marginLeft: 2 },
 
   // Level 3 — layers

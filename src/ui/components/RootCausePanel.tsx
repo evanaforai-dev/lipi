@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { CheckId, Issue, RootCause } from "../../shared/types";
+import { TYPE_COLOR } from "../screenViewModel";
 import { RevealIcon } from "./icons";
 
 const SEEN_LIMIT = 3;
@@ -14,6 +15,7 @@ export function RootCausePanel({
   rootCauses,
   issueById,
   revealingCauseId,
+  failedComponentId,
   onReveal,
   onExitReveal,
   onGoToComponent,
@@ -22,6 +24,7 @@ export function RootCausePanel({
   rootCauses: RootCause[];
   issueById: Map<string, Issue>;
   revealingCauseId: string | null;
+  failedComponentId: string | null;
   onReveal: (causeId: string, checkId: CheckId, nodeIds: string[]) => void;
   onExitReveal: () => void;
   onGoToComponent: (componentId: string) => void;
@@ -53,9 +56,12 @@ export function RootCausePanel({
         const revealing = revealingCauseId === rc.id;
 
         return (
-          <div key={rc.id} style={styles.card}>
+          <div key={rc.id} className="lpt-card" style={styles.card}>
             <div style={styles.face}>
-              <div style={styles.kicker}>{fix.pattern}</div>
+              <div style={styles.kickerRow}>
+                <span style={{ ...styles.dot, background: TYPE_COLOR[dominant] }} />
+                <span style={styles.kicker}>{fix.pattern}</span>
+              </div>
               <div style={styles.title}>{fix.title}</div>
               <div style={styles.desc}>{fix.description}</div>
               <div style={styles.metaRow}>
@@ -88,6 +94,12 @@ export function RootCausePanel({
                   </button>
                 )}
               </div>
+              {componentId && componentId === failedComponentId && (
+                <div style={styles.navFail}>
+                  Can’t open this one — its main component lives in an external library, so Figma
+                  can’t jump to it from here. Open that library file to edit it.
+                </div>
+              )}
             </div>
 
             {open && (
@@ -126,9 +138,16 @@ export function RootCausePanel({
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  panel: { display: "flex", flexDirection: "column", margin: "4px 0 8px" },
-  card: { borderBottom: "1px solid var(--figma-color-border, #ececec)" },
-  face: { display: "flex", flexDirection: "column", gap: 8, padding: "16px 4px" },
+  panel: { display: "flex", flexDirection: "column", gap: 8 },
+  card: {
+    borderRadius: 10,
+    background: "var(--figma-color-bg, #fff)",
+    border: "1px solid var(--figma-color-border, #e6e6e6)",
+    boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+  },
+  face: { display: "flex", flexDirection: "column", gap: 8, padding: "12px 14px" },
+  dot: { flex: "0 0 auto", width: 6, height: 6, borderRadius: 3 },
+  kickerRow: { display: "flex", alignItems: "center", gap: 6 },
   kicker: {
     fontSize: 10,
     fontWeight: 600,
@@ -151,8 +170,17 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
   },
   verify: { fontSize: 11, color: "#2f9e44", opacity: 0.9 },
+  navFail: {
+    fontSize: 11,
+    lineHeight: 1.45,
+    marginTop: 8,
+    padding: "8px 10px",
+    borderRadius: 8,
+    background: "var(--figma-color-bg-warning-tertiary, #fff4e5)",
+    color: "var(--figma-color-text-warning, #8a5a00)",
+  },
   actions: { display: "flex", alignItems: "center", gap: 12, marginTop: 4 },
-  expanded: { display: "flex", flexDirection: "column", gap: 8, padding: "0 4px 16px" },
+  expanded: { display: "flex", flexDirection: "column", gap: 8, padding: "0 14px 12px" },
   row: { display: "flex", gap: 8, alignItems: "baseline" },
   rowLabel: {
     flex: "0 0 auto",

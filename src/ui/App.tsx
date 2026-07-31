@@ -89,6 +89,9 @@ export function App() {
   const [, setRevealState] = useState<RevealState>(NO_REVEAL);
   const [navError, setNavError] = useState<string | null>(null);
   const [revealingCauseId, setRevealingCauseId] = useState<string | null>(null);
+  // Which component's "Go to component" failed — so we can show feedback ON that card.
+  const [componentNavFail, setComponentNavFail] = useState<string | null>(null);
+  const pendingComponentId = useRef<string | null>(null);
 
   const { send } = usePluginBridge((msg: MainToUi) => {
     switch (msg.type) {
@@ -172,9 +175,8 @@ export function App() {
         if (!msg.found) setNavError("That layer no longer exists. Generate again to refresh.");
         break;
       case "GO_TO_COMPONENT_RESULT":
-        if (!msg.found) {
-          setNavError("Main component not found. It may live in an external library.");
-        }
+        // Feedback lands on the card the user clicked (see RootCausePanel), not the top of the list.
+        setComponentNavFail(msg.found ? null : pendingComponentId.current);
         break;
       case "PREVIEW_STATE":
         setPreviewLang(msg.active ? msg.language : null);
@@ -262,6 +264,7 @@ export function App() {
     setActiveLang(lang);
     setNavError(null);
     setRevealingCauseId(null);
+    setComponentNavFail(null);
     setBanner(null);
     setOpenScreenId(null);
     if (previewActive) send({ type: "PREVIEW_ENTER", language: lang });
@@ -291,6 +294,7 @@ export function App() {
     setNavError(null);
     setGenError(null);
     setRevealingCauseId(null);
+    setComponentNavFail(null);
     setRevealState(NO_REVEAL);
     // reviewMode intentionally preserved — the toggle remembers the user's last-chosen lens.
     setStageStatus(emptyStages());
@@ -320,6 +324,8 @@ export function App() {
   };
   const goToComponent = (componentId: string) => {
     setNavError(null);
+    setComponentNavFail(null);
+    pendingComponentId.current = componentId;
     send({ type: "GO_TO_COMPONENT", componentId });
   };
 
@@ -529,6 +535,7 @@ export function App() {
                   rootCauses={report.rootCauses}
                   issueById={issueById}
                   revealingCauseId={revealingCauseId}
+                  failedComponentId={componentNavFail}
                   onReveal={revealCause}
                   onExitReveal={exitReveal}
                   onGoToComponent={goToComponent}
@@ -549,6 +556,7 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: "column",
     height: "100vh",
     color: "var(--figma-color-text, #1e1e1e)",
+    background: "var(--figma-color-bg, #ffffff)",
   },
   complete: {
     display: "flex",

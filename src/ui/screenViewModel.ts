@@ -13,6 +13,15 @@ const TYPE_LABEL: Record<CheckId, string> = {
 };
 const TYPE_ORDER: CheckId[] = ["overflow", "small-indic", "line-clip", "missing-font"];
 
+// One quiet colour per pressure type — the plugin's only colour language. Used as small dots,
+// never as fills, so the UI gains identity without shouting. Tuned to read on light and dark.
+export const TYPE_COLOR: Record<CheckId, string> = {
+  overflow: "#E08542", // amber — text spilling its container
+  "small-indic": "#7B6BEC", // violet — sub-legible type
+  "line-clip": "#3E9BE9", // blue — clipped stacked marks
+  "missing-font": "#E0576B", // rose — missing glyphs
+};
+
 export interface Layer {
   issue: Issue;
   name: string; // node name
