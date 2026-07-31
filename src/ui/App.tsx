@@ -434,7 +434,7 @@ export function App() {
             ) : (
               <>
                 <button
-                  className="lpt-btn lpt-btn-secondary"
+                  className="lpt-btn lpt-btn-tonal"
                   onClick={recheck}
                   title="Re-scan these screens after fixing"
                 >

@@ -88,6 +88,18 @@ button:disabled {
   filter: none;
 }
 
+/* Tonal primary — one calm point of emphasis. A soft brand tint, not a solid blue fill,
+   so the recommended action leads without shouting. */
+.lpt-btn-tonal {
+  background: var(--figma-color-bg-brand-tertiary, #e6f1ff);
+  color: var(--figma-color-text-brand, #0d6efd);
+  border-color: transparent;
+}
+.lpt-btn-tonal:hover:not(:disabled) {
+  background: var(--figma-color-bg-brand-secondary, #d4e6ff);
+  filter: none;
+}
+
 /* Reveal — a quiet, repeated action (one per finding). Text + icon, not a filled button, so
    a screen full of findings reads as content rather than a wall of primary buttons. */
 .lpt-reveal-link {
