@@ -22,9 +22,9 @@ export function ProgressView({ status }: { status: Record<Stage, StageState> }) 
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  root: { display: "flex", flexDirection: "column", padding: "40px 20px", gap: 6 },
+  root: { display: "flex", flexDirection: "column", padding: "40px 20px", gap: 8 },
   title: { fontSize: 14, fontWeight: 600, margin: 0 },
-  sub: { fontSize: 12, opacity: 0.6, margin: "0 0 14px", lineHeight: 1.4 },
+  sub: { fontSize: 12, opacity: 0.6, margin: "0 0 16px", lineHeight: 1.4 },
   track: {
     width: "100%",
     height: 4,

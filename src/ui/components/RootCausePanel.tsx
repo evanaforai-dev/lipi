@@ -128,7 +128,7 @@ export function RootCausePanel({
 const styles: Record<string, React.CSSProperties> = {
   panel: { display: "flex", flexDirection: "column", margin: "4px 0 8px" },
   card: { borderBottom: "1px solid var(--figma-color-border, #ececec)" },
-  face: { display: "flex", flexDirection: "column", gap: 6, padding: "14px 4px" },
+  face: { display: "flex", flexDirection: "column", gap: 8, padding: "16px 4px" },
   kicker: {
     fontSize: 10,
     fontWeight: 600,
@@ -152,8 +152,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   verify: { fontSize: 11, color: "#2f9e44", opacity: 0.9 },
   actions: { display: "flex", alignItems: "center", gap: 12, marginTop: 4 },
-  expanded: { display: "flex", flexDirection: "column", gap: 10, padding: "0 4px 16px" },
-  row: { display: "flex", gap: 10, alignItems: "baseline" },
+  expanded: { display: "flex", flexDirection: "column", gap: 8, padding: "0 4px 16px" },
+  row: { display: "flex", gap: 8, alignItems: "baseline" },
   rowLabel: {
     flex: "0 0 auto",
     width: 84,
@@ -163,7 +163,7 @@ const styles: Record<string, React.CSSProperties> = {
     opacity: 0.5,
   },
   rowValue: { fontSize: 11, opacity: 0.75, lineHeight: 1.45, minWidth: 0 },
-  chips: { display: "flex", flexWrap: "wrap", gap: 6, minWidth: 0 },
+  chips: { display: "flex", flexWrap: "wrap", gap: 8, minWidth: 0 },
   chip: {
     fontSize: 11,
     fontWeight: 500,

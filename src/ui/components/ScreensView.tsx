@@ -146,12 +146,12 @@ export function ScreensView({
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  list: { display: "flex", flexDirection: "column", gap: 14 },
+  list: { display: "flex", flexDirection: "column", gap: 16 },
   card: {
     display: "flex",
     flexDirection: "column",
-    gap: 10,
-    padding: "14px 14px 12px",
+    gap: 8,
+    padding: "16px 16px 12px",
     borderRadius: 8,
     background: "var(--figma-color-bg-secondary, #f7f7f7)",
   },
@@ -159,7 +159,7 @@ const styles: Record<string, React.CSSProperties> = {
   headToggle: {
     display: "flex",
     alignItems: "center",
-    gap: 10,
+    gap: 8,
     flex: 1,
     minWidth: 0,
     padding: 0,
@@ -190,12 +190,12 @@ const styles: Record<string, React.CSSProperties> = {
 
   // Level 2 — problem groups
   groups: { display: "flex", flexDirection: "column", gap: 16 },
-  group: { display: "flex", flexDirection: "column", gap: 3 },
+  group: { display: "flex", flexDirection: "column", gap: 4 },
   groupHead: { display: "flex", alignItems: "center", gap: 8 },
   groupToggle: {
     display: "flex",
     alignItems: "baseline",
-    gap: 5,
+    gap: 4,
     flex: 1,
     minWidth: 0,
     padding: 0,
@@ -216,7 +216,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     gap: 8,
-    padding: "5px 0",
+    padding: "4px 0",
     borderTop: "1px solid var(--figma-color-border, #ececec)",
   },
   layerName: {
