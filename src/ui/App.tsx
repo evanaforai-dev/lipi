@@ -25,6 +25,14 @@ interface RevealState {
 }
 const NO_REVEAL: RevealState = { active: false, count: 0, checkId: null };
 
+// Plain-language name for each pressure type, used mid-sentence in the results headline.
+const DOMINANT_LABEL: Record<string, string> = {
+  overflow: "text overflow",
+  "small-indic": "text too small",
+  "line-clip": "clipped lines",
+  "missing-font": "unsupported fonts",
+};
+
 const emptyStages = (): Record<Stage, StageState> => {
   const s = {} as Record<Stage, StageState>;
   for (const stage of STAGE_ORDER) s[stage] = "pending";
@@ -327,6 +335,18 @@ export function App() {
     [report, issueById],
   );
 
+  // One restrained headline for the results: the total finding count and its dominant cause.
+  const headline = useMemo(() => {
+    if (!report || report.summary.totalIssues === 0) return null;
+    const counts = new Map<string, number>();
+    for (const i of report.issues) counts.set(i.checkId, (counts.get(i.checkId) ?? 0) + 1);
+    let topId = "";
+    let topN = 0;
+    for (const [k, v] of counts) if (v > topN) ((topN = v), (topId = k));
+    const total = report.summary.totalIssues;
+    return { total, lead: topN === total ? "All" : "Mostly", label: DOMINANT_LABEL[topId] ?? "layout pressure" };
+  }, [report]);
+
   // ── Render ──────────────────────────────────────────────────────────────────
   if (phase === "boot") {
     // Brief splash while clientStorage resolves the onboarding flag — avoids a wrong-screen flash.
@@ -384,8 +404,7 @@ export function App() {
               <p style={styles.completeTitle}>Analysis complete</p>
               <p style={styles.completeMeta}>
                 {LANGUAGE_LABEL[meta.language]} · {screenViews.length} screen
-                {screenViews.length === 1 ? "" : "s"} · {report?.summary.totalIssues ?? 0} finding
-                {(report?.summary.totalIssues ?? 0) === 1 ? "" : "s"}
+                {screenViews.length === 1 ? "" : "s"}
               </p>
             </div>
           )}
@@ -466,6 +485,18 @@ export function App() {
             />
           ) : (
             <div style={styles.results}>
+              {/* One restrained anchor: the headline result, before the review lenses. */}
+              {headline && (
+                <div style={styles.anchor}>
+                  <div style={styles.anchorHead}>
+                    <span style={styles.anchorNum}>{headline.total}</span>
+                    <span style={styles.anchorUnit}>finding{headline.total === 1 ? "" : "s"}</span>
+                  </div>
+                  <span style={styles.anchorSub}>
+                    {headline.lead} {headline.label}
+                  </span>
+                </div>
+              )}
               {/* Two review lenses over the SAME findings — pick by audience. */}
               <div style={styles.modeToggle} role="tablist">
                 <button
@@ -564,6 +595,11 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
   },
   results: { display: "flex", flexDirection: "column", gap: 16 },
+  anchor: { display: "flex", flexDirection: "column", gap: 2 },
+  anchorHead: { display: "flex", alignItems: "baseline", gap: 8 },
+  anchorNum: { fontSize: 22, fontWeight: 600, lineHeight: 1, letterSpacing: -0.5 },
+  anchorUnit: { fontSize: 12, opacity: 0.55 },
+  anchorSub: { fontSize: 11, opacity: 0.55 },
   modeToggle: {
     display: "flex",
     gap: 2,
