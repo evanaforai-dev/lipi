@@ -236,10 +236,19 @@ figma.ui.onmessage = async (msg: UiToMain) => {
     }
 
     case "GO_TO_COMPONENT": {
-      const node = figma.getNodeById(msg.componentId);
-      const found = !!node && !node.removed && "type" in node && node.type === "COMPONENT";
+      let node: BaseNode | null = figma.getNodeById(msg.componentId);
+      // Library/remote main components may only resolve via the async lookup.
+      if (!node && "getNodeByIdAsync" in figma) {
+        try {
+          node = await figma.getNodeByIdAsync(msg.componentId);
+        } catch {
+          node = null;
+        }
+      }
+      const found =
+        !!node && !node.removed && (node.type === "COMPONENT" || node.type === "COMPONENT_SET");
       if (found) {
-        const comp = node as ComponentNode;
+        const comp = node as ComponentNode | ComponentSetNode;
         const page = pageOf(comp);
         if (page && page !== figma.currentPage) figma.currentPage = page;
         figma.currentPage.selection = [comp];

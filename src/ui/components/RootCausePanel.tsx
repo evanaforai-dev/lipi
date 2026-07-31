@@ -64,15 +64,22 @@ export function RootCausePanel({
                 </button>
               </div>
               {resolved && <div style={styles.verify}>{rc.resolvedCount} fixed since last check</div>}
-              {componentId && (
+              <div style={styles.actions}>
                 <button
-                  className="lpt-btn lpt-btn-secondary lpt-btn-sm"
-                  style={{ alignSelf: "flex-start", marginTop: 4 }}
-                  onClick={() => onGoToComponent(componentId)}
+                  className="lpt-reveal-link"
+                  onClick={() => (revealing ? onExitReveal() : onReveal(rc.id, dominant, nodeIds))}
                 >
-                  Go to component
+                  {revealing ? "Hide" : <><span aria-hidden="true">◎</span> Reveal</>}
                 </button>
-              )}
+                {componentId && (
+                  <button
+                    className="lpt-btn lpt-btn-secondary lpt-btn-sm"
+                    onClick={() => onGoToComponent(componentId)}
+                  >
+                    Go to component
+                  </button>
+                )}
+              </div>
             </div>
 
             {open && (
@@ -101,13 +108,6 @@ export function RootCausePanel({
                     </span>
                   </div>
                 )}
-                <button
-                  className="lpt-reveal-link"
-                  style={{ alignSelf: "flex-start" }}
-                  onClick={() => (revealing ? onExitReveal() : onReveal(rc.id, dominant, nodeIds))}
-                >
-                  {revealing ? "Hide" : <><span aria-hidden="true">◎</span> Reveal on canvas</>}
-                </button>
               </div>
             )}
           </div>
@@ -143,6 +143,7 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
   },
   verify: { fontSize: 11, color: "#2f9e44", opacity: 0.9 },
+  actions: { display: "flex", alignItems: "center", gap: 12, marginTop: 4 },
   expanded: { display: "flex", flexDirection: "column", gap: 10, padding: "0 4px 16px" },
   row: { display: "flex", gap: 10, alignItems: "baseline" },
   rowLabel: {

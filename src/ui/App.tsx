@@ -334,24 +334,20 @@ export function App() {
   return (
     <main key={phase} className="lpt-page" style={styles.root}>
       {meta && (
-        <header
-          className="lpt-header"
-          style={previewActive ? { ...styles.complete, ...styles.completePreview } : styles.complete}
-        >
+        <header className="lpt-header" style={styles.complete}>
           {previewActive ? (
-            <div style={styles.previewPill}>
-              <span style={styles.pillTitle}>👁 Preview Active</span>
-              <span style={styles.pillMeta}>{LANGUAGE_LABEL[meta.language]} Preview</span>
-              <span style={styles.pillMeta}>
-                {meta.screens} Screen{meta.screens === 1 ? "" : "s"} Localized
-              </span>
+            <div>
+              <p style={styles.previewTitle}>Previewing {LANGUAGE_LABEL[meta.language]}</p>
+              <p style={styles.completeMeta}>
+                {meta.screens} screen{meta.screens === 1 ? "" : "s"} localized on canvas
+              </p>
             </div>
           ) : (
             <div>
-              <p style={styles.completeTitle}>✓ Analysis Complete</p>
+              <p style={styles.completeTitle}>Analysis complete</p>
               <p style={styles.completeMeta}>
-                {LANGUAGE_LABEL[meta.language]} · {screenViews.length} Screen
-                {screenViews.length === 1 ? "" : "s"} · {report?.summary.totalIssues ?? 0} Finding
+                {LANGUAGE_LABEL[meta.language]} · {screenViews.length} screen
+                {screenViews.length === 1 ? "" : "s"} · {report?.summary.totalIssues ?? 0} finding
                 {(report?.summary.totalIssues ?? 0) === 1 ? "" : "s"}
               </p>
             </div>
@@ -486,28 +482,15 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "12px 16px",
     borderBottom: "1px solid var(--figma-color-border, #e5e5e5)",
   },
-  completeTitle: { fontSize: 13, fontWeight: 600, margin: 0, color: "#2f9e44" },
-  previewTitle: { fontSize: 11, fontWeight: 500, margin: "3px 0 0", color: "var(--figma-color-text-brand, #0d99ff)" },
-  context: { fontSize: 11, opacity: 0.65, margin: "2px 0 0", lineHeight: 1.4 },
+  completeTitle: { fontSize: 13, fontWeight: 600, margin: 0 },
+  previewTitle: {
+    fontSize: 13,
+    fontWeight: 600,
+    margin: 0,
+    color: "var(--figma-color-text-brand, #0d99ff)",
+  },
   completeMeta: { fontSize: 11, opacity: 0.7, margin: "2px 0 0" },
-  // Preview state — visually distinct: brand-accented header + a subtle colored status pill.
-  completePreview: {
-    background: "var(--figma-color-bg-brand-tertiary, #edf5ff)",
-    borderBottom: "2px solid var(--figma-color-border-brand, #0d99ff)",
-  },
-  previewPill: {
-    display: "inline-flex",
-    flexDirection: "column",
-    gap: 1,
-    alignSelf: "flex-start",
-    padding: "7px 12px",
-    borderRadius: 8,
-    background: "var(--figma-color-bg-brand, #0d99ff)",
-    color: "var(--figma-color-text-onbrand, #fff)",
-  },
-  pillTitle: { fontSize: 12, fontWeight: 600, letterSpacing: 0.2 },
-  pillMeta: { fontSize: 11, opacity: 0.9 },
-  completeActions: { display: "flex", gap: 4, flexWrap: "wrap", alignItems: "center", marginTop: 2 },
+  completeActions: { display: "flex", gap: 4, flexWrap: "wrap", alignItems: "center", marginTop: 6 },
   content: { flex: 1, overflowY: "auto", padding: "10px 16px 20px" },
   langTabs: {
     display: "flex",
