@@ -96,8 +96,8 @@ export function RootCausePanel({
               </div>
               {componentId && componentId === failedComponentId && (
                 <div style={styles.navFail}>
-                  Can’t open this one — its main component lives in an external library, so Figma
-                  can’t jump to it from here. Open that library file to edit it.
+                  Couldn’t open this component — it’s from an external library or no longer in this
+                  file, so Figma can’t jump to it.
                 </div>
               )}
             </div>
@@ -171,13 +171,12 @@ const styles: Record<string, React.CSSProperties> = {
   },
   verify: { fontSize: 11, color: "#2f9e44", opacity: 0.9 },
   navFail: {
+    display: "flex",
+    gap: 6,
     fontSize: 11,
     lineHeight: 1.45,
     marginTop: 8,
-    padding: "8px 10px",
-    borderRadius: 8,
-    background: "var(--figma-color-bg-warning-tertiary, #fff4e5)",
-    color: "var(--figma-color-text-warning, #8a5a00)",
+    color: "var(--figma-color-text-danger, #d5352b)",
   },
   actions: { display: "flex", alignItems: "center", gap: 12, marginTop: 4 },
   expanded: { display: "flex", flexDirection: "column", gap: 8, padding: "0 14px 12px" },

@@ -270,23 +270,36 @@ figma.ui.onmessage = async (msg: UiToMain) => {
     }
 
     case "GO_TO_COMPONENT": {
-      let node: BaseNode | null = figma.getNodeById(msg.componentId);
-      // Library/remote main components may only resolve via the async lookup.
-      if (!node && "getNodeByIdAsync" in figma) {
-        try {
-          node = await figma.getNodeByIdAsync(msg.componentId);
-        } catch {
-          node = null;
+      // `found` means we actually navigated. It stays false for anything we can't reach —
+      // a removed node, a non-component, or (most commonly) an external-library `remote`
+      // component that lives outside this file. Everything is wrapped so a result is ALWAYS
+      // posted; selecting an off-page node throws, and a thrown handler posts nothing.
+      let found = false;
+      try {
+        let node: BaseNode | null = figma.getNodeById(msg.componentId);
+        if (!node && "getNodeByIdAsync" in figma) {
+          try {
+            node = await figma.getNodeByIdAsync(msg.componentId);
+          } catch {
+            node = null;
+          }
         }
-      }
-      const found =
-        !!node && !node.removed && (node.type === "COMPONENT" || node.type === "COMPONENT_SET");
-      if (found) {
-        const comp = node as ComponentNode | ComponentSetNode;
-        const page = pageOf(comp);
-        if (page && page !== figma.currentPage) figma.currentPage = page;
-        figma.currentPage.selection = [comp];
-        figma.viewport.scrollAndZoomIntoView([comp]);
+        const isComp =
+          !!node && !node.removed && (node.type === "COMPONENT" || node.type === "COMPONENT_SET");
+        const comp = isComp ? (node as ComponentNode | ComponentSetNode) : null;
+        // Remote components are published from another file — there's nowhere to jump to here.
+        if (comp && comp.remote !== true) {
+          const page = pageOf(comp);
+          if (page && page !== figma.currentPage) figma.currentPage = page;
+          // Only select/zoom if it truly lives on the current page now (else selection throws).
+          if (pageOf(comp) === figma.currentPage) {
+            figma.currentPage.selection = [comp];
+            figma.viewport.scrollAndZoomIntoView([comp]);
+            found = true;
+          }
+        }
+      } catch {
+        found = false;
       }
       post({ type: "GO_TO_COMPONENT_RESULT", found });
       break;
