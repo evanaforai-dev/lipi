@@ -1,6 +1,8 @@
 // Shared, professional empty/status states: a centered StatusView for whole-content moments
 // (no issues, errors) and an inline StatusBanner for transient confirmations (export, preview).
 // Each carries an icon, a clear title, one supporting sentence, and an obvious next action.
+import type { ReactNode } from "react";
+import { CloseIcon } from "./icons";
 
 export function StatusView({
   icon,
@@ -12,7 +14,7 @@ export function StatusView({
   secondaryLabel,
   onSecondary,
 }: {
-  icon: string;
+  icon: ReactNode;
   tone?: "neutral" | "positive" | "warning";
   title: string;
   description: string;
@@ -52,7 +54,7 @@ export function StatusBanner({
   onAction,
   onDismiss,
 }: {
-  icon: string;
+  icon: ReactNode;
   title: string;
   message: string;
   actionLabel?: string;
@@ -72,7 +74,7 @@ export function StatusBanner({
         </button>
       )}
       <button style={styles.bannerClose} onClick={onDismiss} title="Dismiss">
-        ✕
+        <CloseIcon size={12} />
       </button>
     </div>
   );

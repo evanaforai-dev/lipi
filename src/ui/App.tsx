@@ -11,6 +11,8 @@ import { ProgressView } from "./components/ProgressView";
 import { RootCausePanel } from "./components/RootCausePanel";
 import { ScreensView } from "./components/ScreensView";
 import { StatusView, StatusBanner } from "./components/StatusView";
+import { CheckIcon, EyeIcon } from "./components/icons";
+import type { ReactNode } from "react";
 import { buildScreenViews } from "./screenViewModel";
 
 type Phase = "boot" | "onboarding" | "generate" | "generating" | "advisor";
@@ -58,7 +60,7 @@ export function App() {
   const [previewLang, setPreviewLang] = useState<Language | null>(null); // which language is previewed
   // Transient confirmation (export complete / preview closed), shown as a dismissible banner.
   const [banner, setBanner] = useState<
-    { icon: string; title: string; message: string; actionLabel?: string; onAction?: () => void } | null
+    { icon: ReactNode; title: string; message: string; actionLabel?: string; onAction?: () => void } | null
   >(null);
   // Review lens: screen-first (per-screen findings) vs system-level (root-cause / component fixes).
   const [reviewMode, setReviewMode] = useState<"screens" | "system">("screens");
@@ -145,7 +147,7 @@ export function App() {
         const fixed = msg.report.resolvedIssues?.length ?? 0;
         const remaining = msg.report.summary.totalIssues;
         setBanner({
-          icon: "✓",
+          icon: <CheckIcon size={16} />,
           title: fixed > 0 ? `${fixed} fixed` : "Re-checked",
           message:
             remaining === 0
@@ -171,7 +173,7 @@ export function App() {
         break;
       case "EXPORT_DONE":
         setBanner({
-          icon: "✓",
+          icon: <CheckIcon size={16} />,
           title: "Export complete",
           message: `${msg.count} localized screen${msg.count === 1 ? "" : "s"} (${LANGUAGE_LABEL[msg.language]}) added to this page as a section.`,
           actionLabel: "New Analysis",
@@ -231,7 +233,7 @@ export function App() {
   const exitPreview = () => {
     send({ type: "PREVIEW_EXIT" });
     setBanner({
-      icon: "👁",
+      icon: <EyeIcon size={16} />,
       title: "Preview closed",
       message: "Your original screens are back on the canvas.",
       actionLabel: "Preview again",
@@ -453,7 +455,7 @@ export function App() {
         {report &&
           (report.summary.totalIssues === 0 ? (
             <StatusView
-              icon="✓"
+              icon={<CheckIcon size={22} />}
               tone="positive"
               title="No issues found"
               description={`Every screen fits comfortably in ${LANGUAGE_LABEL[meta?.language ?? "hi"]}. You're ready to hand off.`}

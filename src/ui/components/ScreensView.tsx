@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { CheckId } from "../../shared/types";
 import type { ScreenView } from "../screenViewModel";
+import { ArrowRightIcon, ChevronIcon, RevealIcon } from "./icons";
 
 // Screen-first triage as a quiet tree: screen → problem type → layers. Pure "what & where" —
 // the fix lives once in Design System, reached via "See the fix". Density grows with problem
@@ -52,12 +53,11 @@ export function ScreensView({
                 <span style={styles.count}>
                   {screen.findingCount} finding{screen.findingCount === 1 ? "" : "s"}
                 </span>
-                <span
+                <ChevronIcon
+                  size={14}
                   className="lpt-chevron"
-                  style={{ ...styles.chevron, transform: open ? "rotate(90deg)" : "none" }}
-                >
-                  ›
-                </span>
+                  style={{ opacity: 0.45, transform: open ? "rotate(90deg)" : "none" }}
+                />
               </button>
               <button
                 className="lpt-btn lpt-btn-ghost lpt-btn-sm lpt-row-action"
@@ -81,15 +81,15 @@ export function ScreensView({
                           <button style={styles.groupToggle} onClick={() => toggleGroup(gkey)}>
                             <span style={styles.groupLabel}>{group.label}</span>
                             <span style={styles.groupCount}>({group.layers.length})</span>
-                            <span
+                            <ChevronIcon
+                              size={13}
                               className="lpt-chevron"
                               style={{
-                                ...styles.groupChevron,
+                                opacity: 0.4,
+                                marginLeft: 2,
                                 transform: showLayers ? "rotate(90deg)" : "none",
                               }}
-                            >
-                              ›
-                            </span>
+                            />
                           </button>
                         ) : (
                           <span style={styles.groupToggle}>
@@ -102,7 +102,8 @@ export function ScreensView({
                           onClick={() => onReveal(group.checkId, group.nodeIds)}
                           title={`Reveal all ${group.layers.length} on the canvas`}
                         >
-                          <span aria-hidden="true">◎</span> Reveal
+                          <RevealIcon size={13} />
+                          <span>Reveal</span>
                         </button>
                       </div>
 
@@ -119,14 +120,16 @@ export function ScreensView({
                                   className="lpt-reveal-link"
                                   onClick={() => onReveal(issue.checkId, [issue.nodeId])}
                                 >
-                                  <span aria-hidden="true">◎</span> Reveal
+                                  <RevealIcon size={13} />
+                                  <span>Reveal</span>
                                 </button>
                               </div>
                             ))}
                           </div>
                           {/* Connection to the system view — the fix lives there, once. */}
                           <button style={styles.seeFix} onClick={onSeeFix}>
-                            See the fix →
+                            <span>See the fix</span>
+                            <ArrowRightIcon size={12} />
                           </button>
                         </>
                       )}
@@ -232,6 +235,9 @@ const styles: Record<string, React.CSSProperties> = {
     flex: "0 0 auto",
   },
   seeFix: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 4,
     alignSelf: "flex-start",
     marginTop: 8,
     padding: 0,

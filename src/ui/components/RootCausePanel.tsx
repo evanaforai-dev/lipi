@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { CheckId, Issue, RootCause } from "../../shared/types";
+import { RevealIcon } from "./icons";
 
 const SEEN_LIMIT = 3;
 
@@ -69,7 +70,14 @@ export function RootCausePanel({
                   className="lpt-reveal-link"
                   onClick={() => (revealing ? onExitReveal() : onReveal(rc.id, dominant, nodeIds))}
                 >
-                  {revealing ? "Hide" : <><span aria-hidden="true">◎</span> Reveal</>}
+                  {revealing ? (
+                    "Hide"
+                  ) : (
+                    <>
+                      <RevealIcon size={13} />
+                      <span>Reveal</span>
+                    </>
+                  )}
                 </button>
                 {componentId && (
                   <button
