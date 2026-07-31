@@ -123,6 +123,37 @@ export function App() {
         setGenError({ title: "Analysis couldn't complete", message: msg.message });
         setPhase("generate");
         break;
+      case "RECHECK_RESULT": {
+        // Re-run of the same screens after fixes: update the report in place, show progress.
+        const lang = msg.language;
+        setReports((prev) => ({
+          ...prev,
+          [lang]: {
+            report: msg.report,
+            meta:
+              prev[lang]?.meta ?? {
+                language: lang,
+                pageName: "",
+                screens: msg.report.screens.length,
+                strings: 0,
+                recommendations: msg.report.rootCauses.length,
+              },
+          },
+        }));
+        setPreviewLang(null);
+        setOpenScreenId(null);
+        const fixed = msg.report.resolvedIssues?.length ?? 0;
+        const remaining = msg.report.summary.totalIssues;
+        setBanner({
+          icon: "✓",
+          title: fixed > 0 ? `${fixed} fixed` : "Re-checked",
+          message:
+            remaining === 0
+              ? "No issues left — you're clear."
+              : `${remaining} issue${remaining === 1 ? "" : "s"} remaining.`,
+        });
+        break;
+      }
       case "REVEAL_STATE":
         setRevealState({ active: msg.active, count: msg.count, checkId: msg.checkId });
         if (!msg.active) setRevealingCauseId(null);
@@ -209,6 +240,10 @@ export function App() {
   };
   const exportLocalized = () => {
     if (activeLang) send({ type: "EXPORT", language: activeLang });
+  };
+  // Re-check the same screens after fixing — the count drops as issues resolve.
+  const recheck = () => {
+    if (activeLang) send({ type: "RECHECK", language: activeLang });
   };
 
   // Switch the viewed language (its own report), and move the on-canvas preview with it.
@@ -371,11 +406,18 @@ export function App() {
               </>
             ) : (
               <>
-                <button className="lpt-btn lpt-btn-secondary" onClick={exportLocalized}>
-                  Export
+                <button
+                  className="lpt-btn lpt-btn-secondary"
+                  onClick={recheck}
+                  title="Re-scan these screens after fixing"
+                >
+                  Re-check
                 </button>
                 <button className="lpt-btn lpt-btn-ghost" onClick={enterPreview}>
                   Preview
+                </button>
+                <button className="lpt-btn lpt-btn-ghost" onClick={exportLocalized}>
+                  Export
                 </button>
                 <button
                   className="lpt-btn lpt-btn-ghost"

@@ -9,6 +9,7 @@ export type UiToMain =
   | { type: "SAVE_KEY"; key: string } // persist the translation key in clientStorage
   | { type: "PREPARE"; language: Language } // extract unique source strings from selection
   | { type: "GENERATE"; language: Language; translations: Record<string, string> }
+  | { type: "RECHECK"; language: Language } // re-run on the same screens after fixes (cached translations)
   | { type: "PREVIEW_ENTER"; language: Language } // clone-swap preview for one language
   | { type: "PREVIEW_EXIT" } // leave preview, restore originals
   | { type: "EXPORT"; language: Language } // permanently create localized copies for one language
@@ -27,6 +28,7 @@ export type MainToUi =
   | { type: "PREPARE_ERROR"; message: string }
   | { type: "STAGE"; stage: Stage } // a sandbox-owned stage has started
   | { type: "GENERATE_RESULT"; report: Report; meta: GenMeta }
+  | { type: "RECHECK_RESULT"; report: Report; language: Language } // re-check result (updates in place)
   | { type: "GENERATE_ERROR"; message: string }
   | { type: "REVEAL_STATE"; active: boolean; count: number; checkId: CheckId | null }
   | { type: "SELECT_RESULT"; nodeId: string; found: boolean }

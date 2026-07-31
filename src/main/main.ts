@@ -14,7 +14,6 @@ import {
   exitPreview,
   isPreviewActive,
   previewNode,
-  remapForReveal,
   cleanupPreviewArtifacts,
 } from "./preview";
 import { exportLocalized } from "./export";
@@ -57,6 +56,69 @@ function pageOf(node: BaseNode): PageNode | null {
   return current as PageNode | null;
 }
 
+// The full analysis pipeline for one language: clone → translate → measure → detect → assemble
+// → diff. Shared by GENERATE (first run) and RECHECK (re-run after fixes, same selection).
+// Leaves the document exactly as before; returns the report and the count of strings applied.
+async function runAnalysis(
+  roots: readonly SceneNode[],
+  translations: Record<string, string>,
+  language: Language,
+): Promise<{ report: Report; strings: number }> {
+  post({ type: "STAGE", stage: "building" });
+  const { frames, cloneToOriginal } = cloneForMeasurement(roots);
+  const baseline = captureLayout(frames);
+
+  post({ type: "STAGE", stage: "layouts" });
+  const strings = await applyTranslations(frames, translations, language);
+  const localized = captureLayout(frames);
+  verifyCapture(baseline, localized);
+  const delta = computeLayoutDelta(baseline, localized);
+  printDelta(delta);
+
+  post({ type: "STAGE", stage: "checking" });
+  const staticResult = detectStaticIssues(frames);
+  const pressureIssues = createPressureIssues(delta);
+  printPressure(delta);
+
+  const issues = dedupeIssues([...staticResult.issues, ...pressureIssues]);
+  remapIssuesToOriginal(issues, cloneToOriginal);
+
+  // A "screen" is a frame the user SELECTED — see rootIds attribution.
+  const rootIds = new Set(roots.map((r) => r.id));
+  const scannedScreens = new Map(
+    roots.map((r) => {
+      const page = pageOf(r);
+      return [r.id, { name: r.name, pageId: page?.id ?? "", pageName: page?.name ?? "" }];
+    }),
+  );
+
+  removeClones(frames);
+
+  post({ type: "STAGE", stage: "recommendations" });
+  const report = assembleReport(issues, {
+    scanId: `gen-${++genCounter}`,
+    createdAt: Date.now(),
+    scannedNodes: staticResult.scannedNodes,
+    scannedScreens,
+    rootIds,
+  });
+
+  // Verify Mode: diff against the previous run of THIS language (node ids are stable).
+  const prev = previousReportByLang[language];
+  if (prev) {
+    const { diff, resolvedIssues } = diffReports(prev, report);
+    report.diff = diff;
+    report.resolvedIssues = resolvedIssues;
+  } else {
+    for (const issue of report.issues) issue.status = "unchanged";
+  }
+  previousReportByLang[language] = report;
+  translationsByLang[language] = translations;
+  lastRootIds = roots.map((r) => r.id);
+
+  return { report, strings };
+}
+
 // Surface any saved translation key + the onboarding flag to the UI on launch.
 figma.clientStorage
   .getAsync(KEY_STORAGE)
@@ -96,70 +158,7 @@ figma.ui.onmessage = async (msg: UiToMain) => {
           break;
         }
         clearReveal();
-
-        post({ type: "STAGE", stage: "building" });
-        // Temporary in-place clones (never a saved page). Analyzed, then deleted.
-        const { frames, cloneToOriginal } = cloneForMeasurement(roots);
-        // Baseline = the cloned English layout, before any translation.
-        const baseline = captureLayout(frames);
-
-        post({ type: "STAGE", stage: "layouts" });
-        const strings = await applyTranslations(frames, msg.translations, msg.language);
-        // Localized = the same nodes after translation reflowed (reflow is synchronous).
-        const localized = captureLayout(frames);
-        verifyCapture(baseline, localized); // capture summary
-        const delta = computeLayoutDelta(baseline, localized);
-        printDelta(delta);
-
-        post({ type: "STAGE", stage: "checking" });
-        // Analyze the in-place clones directly — never touch the user's selection.
-        const staticResult = detectStaticIssues(frames);
-        const pressureIssues = createPressureIssues(delta);
-        printPressure(delta);
-
-        // Re-key every finding to the ORIGINAL design nodes, then discard the clones so the
-        // document is left exactly as before. Reveal/Verify then operate on the real layers.
-        const issues = dedupeIssues([...staticResult.issues, ...pressureIssues]);
-        remapIssuesToOriginal(issues, cloneToOriginal);
-
-        // A "screen" is a frame the user SELECTED — not the outermost frame. When screens are
-        // nested inside a wrapper frame, the outermost-frame rule would lump them into one; the
-        // selection is the source of truth (header says "N screens" = N roots).
-        const rootIds = new Set(roots.map((r) => r.id));
-        const scannedScreens = new Map(
-          roots.map((r) => {
-            const page = pageOf(r);
-            return [r.id, { name: r.name, pageId: page?.id ?? "", pageName: page?.name ?? "" }];
-          }),
-        );
-
-        removeClones(frames);
-
-        post({ type: "STAGE", stage: "recommendations" });
-        const report = assembleReport(issues, {
-          scanId: `gen-${++genCounter}`,
-          createdAt: Date.now(),
-          scannedNodes: staticResult.scannedNodes,
-          scannedScreens,
-          rootIds,
-        });
-
-        // Verify Mode: diff against the previous run of THIS language (node ids are stable).
-        const prev = previousReportByLang[msg.language];
-        if (prev) {
-          const { diff, resolvedIssues } = diffReports(prev, report);
-          report.diff = diff;
-          report.resolvedIssues = resolvedIssues;
-        } else {
-          for (const issue of report.issues) issue.status = "unchanged";
-        }
-        previousReportByLang[msg.language] = report;
-
-        // Remember this language's translations + the shared selection so Preview / Export can
-        // reuse them without re-translating. Preview is configured per language on PREVIEW_ENTER.
-        translationsByLang[msg.language] = msg.translations;
-        lastRootIds = roots.map((r) => r.id);
-
+        const { report, strings } = await runAnalysis(roots, msg.translations, msg.language);
         post({
           type: "GENERATE_RESULT",
           report,
@@ -171,6 +170,38 @@ figma.ui.onmessage = async (msg: UiToMain) => {
             recommendations: report.rootCauses.length,
           },
         });
+      } catch (err) {
+        post({
+          type: "GENERATE_ERROR",
+          message: err instanceof Error ? err.message : String(err),
+        });
+      }
+      break;
+    }
+
+    case "RECHECK": {
+      // Re-run analysis on the SAME screens after the user has fixed things — reusing the cached
+      // translations (no re-translate) so the delta reflects the new geometry. The diff shows
+      // what got resolved, so the count visibly drops.
+      try {
+        const roots = lastRootIds
+          .map((id) => figma.getNodeById(id))
+          .filter(
+            (n): n is SceneNode =>
+              !!n && !n.removed && n.type !== "PAGE" && n.type !== "DOCUMENT",
+          );
+        const translations = translationsByLang[msg.language];
+        if (roots.length === 0 || !translations) {
+          post({ type: "GENERATE_ERROR", message: "Re-select your screens, then generate again." });
+          break;
+        }
+        clearReveal();
+        if (isPreviewActive()) {
+          exitPreview();
+          post({ type: "PREVIEW_STATE", active: false, language: null });
+        }
+        const { report } = await runAnalysis(roots, translations, msg.language);
+        post({ type: "RECHECK_RESULT", report, language: msg.language });
       } catch (err) {
         post({
           type: "GENERATE_ERROR",
@@ -220,11 +251,14 @@ figma.ui.onmessage = async (msg: UiToMain) => {
     }
 
     case "REVEAL": {
-      // In preview, overlays go on the translated clones (created lazily), not the hidden
-      // originals — and the revealed nodes pulse. Outside preview, behaves exactly as today.
-      const preview = isPreviewActive();
-      const nodeIds = preview ? await remapForReveal(msg.nodeIds) : msg.nodeIds;
-      const count = reveal(msg.checkId, nodeIds, preview);
+      // Reveal is the bridge from "assess" to "fix": if previewing, leave preview so the user
+      // lands on the EDITABLE originals, then highlight them. (Preview shows the localized clones
+      // you can't edit; Reveal takes you to the layer you actually change.)
+      if (isPreviewActive()) {
+        exitPreview();
+        post({ type: "PREVIEW_STATE", active: false, language: null });
+      }
+      const count = reveal(msg.checkId, msg.nodeIds);
       post({ type: "REVEAL_STATE", active: count > 0, count, checkId: msg.checkId });
       break;
     }
