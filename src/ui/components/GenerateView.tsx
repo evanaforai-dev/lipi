@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Language } from "../../shared/translate";
 import { PROVIDERS, type ProviderId } from "../translate/provider";
+import { CheckboxIcon, RadioIcon } from "./icons";
 
 // Entry experience: choose one or more languages, then generate & test. No mention of
 // pipelines, providers, or engines — the user just asks for localized versions and what to fix.
@@ -48,7 +49,7 @@ export function GenerateView({
               style={{ ...styles.lang, ...(selected ? styles.langOn : null) }}
               onClick={() => onToggleLang(l.id)}
             >
-              <span style={styles.radio}>{selected ? "☑" : "☐"}</span>
+              <CheckboxIcon checked={selected} size={16} />
               {l.label}
             </div>
           );
@@ -65,7 +66,7 @@ export function GenerateView({
               style={{ ...styles.lang, ...(selected ? styles.langOn : null) }}
               onClick={() => onSelectProvider(p.id)}
             >
-              <span style={styles.radio}>{selected ? "●" : "○"}</span>
+              <RadioIcon selected={selected} size={16} />
               {p.label}
               <span style={styles.soon}>{p.requiresKey ? "API key" : "no key"}</span>
             </div>

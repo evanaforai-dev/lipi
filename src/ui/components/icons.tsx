@@ -66,3 +66,58 @@ export const ArrowRightIcon = (p: IconProps) => (
     <path d="M8.5 4.5L12 8l-3.5 3.5" {...stroke} />
   </Svg>
 );
+
+// Drawn form controls (CSS-var brand via `style` since presentation attrs don't read vars).
+const brand = "var(--figma-color-bg-brand, #0d99ff)";
+const onBrand = "var(--figma-color-text-onbrand, #ffffff)";
+
+export const CheckboxIcon = ({ checked, size = 16 }: IconProps & { checked: boolean }) => (
+  <Svg size={size}>
+    {checked ? (
+      <>
+        <rect x="1.5" y="1.5" width="13" height="13" rx="3.5" style={{ fill: brand }} />
+        <path
+          d="M4.5 8.2l2.4 2.4 4.6-5.2"
+          style={{ stroke: onBrand }}
+          strokeWidth="1.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        />
+      </>
+    ) : (
+      <rect
+        x="1.5"
+        y="1.5"
+        width="13"
+        height="13"
+        rx="3.5"
+        fill="none"
+        stroke="currentColor"
+        strokeOpacity="0.4"
+        strokeWidth="1.5"
+      />
+    )}
+  </Svg>
+);
+
+export const RadioIcon = ({ selected, size = 16 }: IconProps & { selected: boolean }) => (
+  <Svg size={size}>
+    {selected ? (
+      <>
+        <circle cx="8" cy="8" r="6.25" fill="none" style={{ stroke: brand }} strokeWidth="1.5" />
+        <circle cx="8" cy="8" r="3" style={{ fill: brand }} />
+      </>
+    ) : (
+      <circle
+        cx="8"
+        cy="8"
+        r="6.25"
+        fill="none"
+        stroke="currentColor"
+        strokeOpacity="0.4"
+        strokeWidth="1.5"
+      />
+    )}
+  </Svg>
+);
