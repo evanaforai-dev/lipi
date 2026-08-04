@@ -286,6 +286,22 @@ function focus(cx, cy, scale, animate = true) {
   zoomEl().textContent = Math.round(scale * 100) + "%";
 }
 
+// Cinematic camera move — custom duration + easing per shot (used by the film cut).
+function cineFocus(cx, cy, scale, ms = 1200, ease = "cubic-bezier(.45,0,.12,1)") {
+  const c = canvasEl();
+  const tx = c.clientWidth / 2 - cx * scale;
+  const ty = c.clientHeight / 2 - cy * scale;
+  const w = world();
+  w.style.transition = `transform ${ms}ms ${ease}`;
+  w.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+  zoomEl().textContent = Math.round(scale * 100) + "%";
+}
+function filmFade() {
+  let f = document.getElementById("film-fade");
+  if (!f) { f = document.createElement("div"); f.id = "film-fade"; document.body.appendChild(f); }
+  setTimeout(() => f.classList.add("on"), 20);
+}
+
 // camera framings per stage
 const OVERVIEW_EN = () => focus((frameX(5) + PHONE_W) / 2, 250, 0.52);
 const OVERVIEW_HI = () => focus((frameX(5) + PHONE_W) / 2, HI_Y + 250, 0.52);
@@ -925,6 +941,76 @@ async function animateRecheckSteps() {
   paintRecheckBadges(FINDINGS.hi, RECHECK.hi); // settle to green ✓ + remaining
 }
 
+/* ---- The 30-second portfolio film ─────────────────────────────────────────
+   Not a feature walkthrough. An emotional arc: looks fine → translation breaks
+   it → the plugin finds a hidden pattern → one fix, many screens → confidence.
+   The one line it must leave: "one component was causing failures everywhere." */
+async function film() {
+  camAnim = true;
+  window.DEMO.finished = false;
+  resetCanvas(); showHindi(false); showTamil(false); clearBadges();
+
+  // ── Scene 1 · 0–3s — "This is a Figma plugin." English frames, selected. ──
+  generateView(false);
+  selectEnglish(true);
+  cineFocus((frameX(4) + PHONE_W) / 2, 250, 0.5, 0); // establish, instant
+  await wait(700);
+  cineFocus(frameX(1) + PHONE_W / 2, 250, 0.66, 2700, "cubic-bezier(.4,0,.2,1)"); // slow, confident push
+  await wait(2700);
+
+  // ── Scene 2 · 3–7s — Generate → Hindi appears → it breaks. ──
+  generateView(true);
+  await wait(450);
+  progressView(80, 1, { title: "Localizing…", sub: "हिन्दी" }); // a flash, not a dwell
+  selectEnglish(false);
+  showHindi(true); await raf();
+  // English checkout (fine) sits directly above its Hindi copy (broken).
+  cineFocus(frameX(3) + PHONE_W / 2, 600, 0.6, 1300);
+  await wait(1000);
+  const coCta = elIn("hi", "checkout", '[data-cta="checkout"]');
+  const coPh = phone("hi", "checkout");
+  if (coCta) { highlight(coPh, coCta, { color: "var(--t-overflow)", label: "Text Overflow", below: false }); pressureBadge(coPh, coCta, "+48px"); }
+  await wait(2400);
+
+  // ── Scene 3 · 7–12s — Analysis reveals the finding, with the geometry. ──
+  resultsView(); paintBadges(DATA.findingsByScreen, "hi");
+  if (coCta) { baselineOutline(coPh, coCta, "English 120px", 48); measureWidth(coPh, coCta, "needs 168px", { below: false }); recoChip(coPh, "Allow intrinsic sizing"); }
+  cineFocus(frameX(3) + PHONE_W / 2, HI_Y + 415, 1.5, 1500); // fly into the failure
+  await wait(2800);
+  cineFocus(frameX(0) + PHONE_W / 2, HI_Y + 300, 1.0, 1300); // and a second kind of failure
+  highlightAll("hi", "home", ".cat span", { color: "var(--t-small)", label: "Text too small" });
+  await wait(2100);
+
+  // ── Scene 4 · 12–19s — HERO: one component, failing across many screens. ──
+  clearHighlights(); clearDeltas();
+  cineFocus(frameX(2) + PHONE_W / 2, HI_Y + 256, 0.56, 1700, "cubic-bezier(.5,0,.1,1)"); // pull back to the row
+  await wait(1300);
+  // the same button lights up, screen by screen — the pattern reveals itself
+  highlightAll("hi", "restaurant", ".addbtn", { color: "var(--t-overflow)" }); await wait(560);
+  { const e = elIn("hi", "cart", ".cta"); if (e) highlight(phone("hi", "cart"), e, { color: "var(--t-overflow)" }); } await wait(560);
+  { const e = elIn("hi", "checkout", '[data-cta="checkout"]'); if (e) highlight(phone("hi", "checkout"), e, { color: "var(--t-overflow)", label: "Same component", below: false }); } await wait(700);
+  designSystemView(); // …and collapses into one root cause: Fixed-width buttons · 6 screens
+  await wait(3800); // hero: hold on "Appears in 6 screens"
+
+  // ── Scene 5 · 19–25s — Fix once → Re-check → momentum. ──
+  clearHighlights();
+  resultsView({ map: RECHECK.hi, anchorSub: "Down from 11 findings", banner: `<div class="banner ok"><span class="b-ic">✓</span><div><div class="b-t">7 fixed · 4 remaining</div><div class="b-m">One component fix — re-checked.</div></div></div>` });
+  cineFocus((frameX(5) + PHONE_W) / 2, HI_Y + 256, 0.52, 1300);
+  await animateRecheckSteps(); // 11 → 9 → 7 → 4, frames flash green
+  await wait(2400);
+
+  // ── Scene 6 · 25–30s — Export → clean localized canvas → hold → fade. ──
+  clearBadges(); clearHighlights(); clearDeltas();
+  document.querySelectorAll(".artboard.resolved").forEach((a) => a.classList.remove("resolved"));
+  showSection(true); await raf();
+  setPlugin(`<div class="banner ok" style="margin-top:4px"><span class="b-ic">✓</span><div><div class="b-t">Export complete</div><div class="b-m">6 localized screens · ready for review</div></div></div>`);
+  cineFocus((frameX(5) + PHONE_W) / 2, HI_Y + 205, 0.5, 1900, "cubic-bezier(.4,0,.2,1)");
+  await wait(3200); // hold on the clean localized canvas
+  filmFade();
+  await wait(1100);
+  window.DEMO.finished = true;
+}
+
 /* ---- Boot --------------------------------------------------------------- */
 async function boot() {
   DATA = await fetch("fake-data.json").then((r) => r.json());
@@ -938,6 +1024,7 @@ async function boot() {
     finished: false,
     stages: STAGE_IDS,
     stage: (id) => goStage(id),
+    film: () => film(),
     setCameraAnimation: (on) => (camAnim = on),
     async play() {
       camAnim = true;
@@ -958,6 +1045,9 @@ async function boot() {
     document.body.classList.add("shot");
     camAnim = false;
     await goStage("01-selection");
+  } else if (params.get("film") === "1") {
+    document.body.classList.add("film-mode");
+    film();
   } else if (params.get("stage")) {
     await goStage(params.get("stage"));
   } else {

@@ -9,6 +9,7 @@
     "screenshots": "node screenshot.mjs",
     "gallery": "node contact.mjs",
     "video": "node video.mjs",
+    "film": "node film.mjs",
     "demo": "playwright install chromium && node screenshot.mjs && node contact.mjs && node video.mjs"
   },
   "devDependencies": {

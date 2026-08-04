@@ -483,6 +483,11 @@ body {
 
 .counter { font-variant-numeric: tabular-nums; }
 
+/* Film cut — cinematic fade, and hide the live zoom readout (a screen-recording tell). */
+#film-fade { position: fixed; inset: 0; background: #fff; opacity: 0; z-index: 9999; pointer-events: none; transition: opacity 900ms ease; }
+#film-fade.on { opacity: 1; }
+.film-mode #tb-zoom { visibility: hidden; }
+
 /* language tabs (bilingual results) */
 .lang-tabs { display: flex; gap: 16px; border-bottom: 1px solid var(--line); margin: 0 0 14px; }
 .lang-tabs button {

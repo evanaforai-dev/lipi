@@ -57,11 +57,15 @@ and missing-font (22) — are revealed on the actual screens, not just listed.
 `npm run demo` also builds two extra deliverables:
 
 - **`contact-sheet.png`** — all 15 stills on one page (source: `gallery.html`).
-- **`demo-walkthrough.mp4`** / **`.webm`** — a ~70s animated recording of the
-  autoplay (camera pans, progress, the 11→4 counter, reveal pulses, bilingual,
-  before/after, and all four problem types). The MP4 (H.264) plays everywhere —
-  QuickTime, Preview, Keynote, PowerPoint; the WebM is the raw recording.
-  MP4 conversion uses the bundled `ffmpeg-static` (no system ffmpeg needed).
+- **`demo-film.mp4`** / **`.webm`** — a **~30s portfolio film** (`npm run film`).
+  A directed, cinematic cut with an emotional arc — looks fine → translation
+  breaks it → the plugin finds a hidden pattern → one fix, many screens →
+  confidence. Built to leave one idea: *"one component was causing localization
+  failures across multiple screens."* Not a feature list.
+- **`demo-walkthrough.mp4`** / **`.webm`** — the ~75s complete walkthrough
+  (`npm run video`): every stage, all four problem types, bilingual, before/after.
+  The MP4s (H.264) play everywhere (QuickTime, Preview, Keynote, PowerPoint) via
+  the bundled `ffmpeg-static`; the WebMs are the raw recordings.
 
 Regenerate individually with `npm run screenshots`, `npm run gallery`, or `npm run video`.
 See everything together in a browser: `npm run serve` → <http://localhost:4599/gallery.html>
