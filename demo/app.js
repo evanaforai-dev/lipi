@@ -22,8 +22,16 @@ const COL = 300; // x spacing between frames
 const PHONE_W = 250;
 const EN_Y = 0;
 const HI_Y = 620; // hindi row lives below the english row
+const TA_Y = 1240; // tamil row below hindi (bilingual runs)
+const ROW_Y = { en: EN_Y, hi: HI_Y, ta: TA_Y };
+const LANG_LABEL = { hi: "हिन्दी", ta: "தமிழ்" };
+// before/after comparison pair lives in its own clear area
+const BA_Y = 1900;
 
 function frameX(i) { return i * COL; }
+// per-language findings, resolved after DATA loads
+let FINDINGS = {};
+let RECHECK = {};
 
 // translation ---------------------------------------------------------------
 function T(key, lang) {
@@ -143,6 +151,21 @@ function profileHTML(L) {
   </div>${navbar("profile")}`;
 }
 
+// "After the fix" — the CTA hugs its label (intrinsic width) so the full string shows.
+function checkoutFixedHTML(L) {
+  return `<div class="body">
+    <div class="scr-title">${T("Checkout", L)}</div>
+    <div class="co-card"><div class="co-top"><small>${T("Delivery Address", L)}</small><span class="co-change">${T("Change", L)}</span></div>
+      <b>${T("Home", L)}</b><div class="co-sub">42, MG Road, Indiranagar, Bengaluru 560038</div></div>
+    <div class="co-card"><small>${T("Payment Method", L)}</small><b>•••• •••• •••• 4242</b></div>
+    <div class="co-card co-sum"><small>${T("Order Summary", L)}</small>
+      <div style="height:6px"></div>
+      <div class="brow"><span>${T("Subtotal", L)}</span><span>₹340</span></div>
+      <div class="brow total"><span>${T("Total", L)}</span><span>₹398</span></div></div>
+    <div style="text-align:center"><button class="cta hug">${T("Place Order", L)}</button></div>
+  </div>`;
+}
+
 const TEMPLATES = { home: homeHTML, restaurant: restaurantHTML, cart: cartHTML, checkout: checkoutHTML, orders: ordersHTML, profile: profileHTML };
 
 function phoneHTML(screen, lang) {
@@ -155,16 +178,10 @@ function buildWorld() {
   const w = world();
   w.innerHTML = "";
 
-  // export section wrapper (behind hindi frames, hidden until export)
-  const sec = document.createElement("div");
-  sec.id = "section";
+  // export section wrappers (behind the localized rows, hidden until export)
   const lastX = frameX(DATA.screens.length - 1) + PHONE_W;
-  sec.style.left = "-36px";
-  sec.style.top = HI_Y - 14 + "px";
-  sec.style.width = lastX + 72 + "px";
-  sec.style.height = "552px";
-  sec.innerHTML = `<div class="sec-title">Localized&nbsp;&nbsp;<span class="sec-pill">हिन्दी · 6 screens</span></div>`;
-  w.appendChild(sec);
+  w.appendChild(sectionEl("section", HI_Y, "हिन्दी · 6 screens", lastX));
+  w.appendChild(sectionEl("section2", TA_Y, "தமிழ் · 6 screens", lastX));
 
   // alignment guide + a spacing label between first two english frames
   const guide = document.createElement("div");
@@ -182,11 +199,40 @@ function buildWorld() {
   sp.innerHTML = `<span class="bar"></span><span class="val">50</span><span class="bar"></span>`;
   w.appendChild(sp);
 
-  // english + hindi artboards
+  // english + hindi + tamil artboards
   DATA.screens.forEach((s, i) => {
     w.appendChild(artboard(s, i, "en", EN_Y));
     w.appendChild(artboard(s, i, "hi", HI_Y, true));
+    w.appendChild(artboard(s, i, "ta", TA_Y, true));
   });
+
+  // before / after comparison pair (own clear area, shown only on that stage)
+  buildBeforeAfter(w);
+}
+
+function sectionEl(id, y, pillText, lastX) {
+  const sec = document.createElement("div");
+  sec.id = id;
+  sec.style.left = "-36px";
+  sec.style.top = y - 14 + "px";
+  sec.style.width = lastX + 72 + "px";
+  sec.style.height = "552px";
+  sec.innerHTML = `<div class="sec-title">Localized&nbsp;&nbsp;<span class="sec-pill">${pillText}</span></div>`;
+  return sec;
+}
+
+function buildBeforeAfter(w) {
+  const wrap = document.createElement("div");
+  wrap.id = "beforeafter";
+  wrap.className = "hidden";
+  wrap.style.left = frameX(1) + "px";
+  wrap.style.top = BA_Y + "px";
+  const before = `<div class="ba-col"><div class="ba-tag bad">Before · CTA clipped</div>
+    <div class="phone"><div class="screen indic">${statusbar()}${checkoutHTML("hi")}</div></div></div>`;
+  const after = `<div class="ba-col"><div class="ba-tag good">After · hugs label</div>
+    <div class="phone"><div class="screen indic">${statusbar()}${checkoutFixedHTML("hi")}</div></div></div>`;
+  wrap.innerHTML = before + after;
+  w.appendChild(wrap);
 }
 
 function artboard(screen, i, lang, y, hidden = false) {
@@ -195,7 +241,7 @@ function artboard(screen, i, lang, y, hidden = false) {
   el.id = `ab-${lang}-${screen.id}`;
   el.style.left = frameX(i) + "px";
   el.style.top = y + "px";
-  const label = lang === "hi" ? screen.name.replace(/^\d+ · /, (m) => m) + " · हिन्दी" : screen.name;
+  const label = lang === "en" ? screen.name : `${screen.name} · ${LANG_LABEL[lang]}`;
   el.innerHTML = `<div class="ab-name"><span class="ab-dot"></span>${label}</div>${phoneHTML(screen, lang)}
     <span class="handle tl"></span><span class="handle tr"></span><span class="handle bl"></span><span class="handle br"></span>`;
   return el;
@@ -220,22 +266,29 @@ const OVERVIEW_HI = () => focus((frameX(5) + PHONE_W) / 2, HI_Y + 250, 0.52);
 const PREVIEW_CAM = () => focus(frameX(1) + PHONE_W / 2, (250 + HI_Y + 260) / 2, 0.62);
 const REVEAL_CAM = () => focus(frameX(3) + PHONE_W / 2, HI_Y + 452, 1.75);
 const EXPORT_CAM = () => focus((frameX(5) + PHONE_W) / 2, HI_Y + 210, 0.5);
+// bilingual framings (english + hindi + tamil, or the two localized rows)
+const TRILINGUAL_CAM = () => focus(frameX(1) + PHONE_W / 2, (EN_Y + TA_Y + 512) / 2, 0.42);
+const LOCALIZED_ROWS_CAM = () => focus((frameX(5) + PHONE_W) / 2, (HI_Y + TA_Y + 512) / 2, 0.46);
+const EXPORT2_CAM = () => focus((frameX(5) + PHONE_W) / 2, (HI_Y + TA_Y + 512) / 2 - 10, 0.42);
+const BEFORE_AFTER_CAM = () => focus(frameX(1) + COL / 2 + PHONE_W / 2, BA_Y + 300, 0.92);
 
 /* ---- Frame decorations (selection, badges, reveal) ---------------------- */
 function selectEnglish(on) {
   DATA.screens.forEach((s) => document.getElementById(`ab-en-${s.id}`).classList.toggle("selected", on));
 }
-function showHindi(on) {
-  DATA.screens.forEach((s) => document.getElementById(`ab-hi-${s.id}`).classList.toggle("hidden", !on));
+function showRow(lang, on) {
+  DATA.screens.forEach((s) => document.getElementById(`ab-${lang}-${s.id}`).classList.toggle("hidden", !on));
 }
+const showHindi = (on) => showRow("hi", on);
+const showTamil = (on) => showRow("ta", on);
 function clearBadges() {
   document.querySelectorAll(".ab-badge").forEach((b) => b.remove());
 }
-function paintBadges(map) {
-  clearBadges();
+function paintBadges(map, lang = "hi", append = false) {
+  if (!append) clearBadges();
   Object.entries(map).forEach(([sid, findings]) => {
     if (!findings.length) return;
-    const ph = document.getElementById(`ab-hi-${sid}`);
+    const ph = document.getElementById(`ab-${lang}-${sid}`);
     if (!ph) return;
     const types = [...new Set(findings.map((f) => f.type))];
     const badge = document.createElement("div");
@@ -269,6 +322,8 @@ function addReveal() {
   ph.querySelector(".screen").appendChild(tag);
 }
 function showSection(on) { document.getElementById("section").classList.toggle("show", on); }
+function showSection2(on) { document.getElementById("section2").classList.toggle("show", on); }
+function showBeforeAfter(on) { document.getElementById("beforeafter").classList.toggle("hidden", !on); }
 
 /* ---- Plugin views ------------------------------------------------------- */
 function tick(on) {
@@ -308,15 +363,15 @@ function generateView(highlight) {
 }
 
 const PROG_STAGES = ["Preparing", "Translating", "Measuring", "Detecting", "Assembling"];
-function progressView(pct, activeIdx) {
+function progressView(pct, activeIdx, opts = {}) {
   const rows = PROG_STAGES.map((s, i) => {
     const cls = i < activeIdx ? "done" : i === activeIdx ? "active" : "pending";
     const mk = i < activeIdx ? "✓" : "";
     return `<div class="stage ${cls}"><span class="mk">${mk}</span>${s}…</div>`;
   }).join("");
   setPlugin(`
-    <div class="prog-title">Analyzing 6 screens</div>
-    <div class="prog-sub">हिन्दी · Demo Dictionary</div>
+    <div class="prog-title">${opts.title || "Analyzing 6 screens"}</div>
+    <div class="prog-sub">${opts.sub || "हिन्दी · Demo Dictionary"}</div>
     <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
     ${rows}
   `);
@@ -345,11 +400,21 @@ function resultsView(opts = {}) {
   const total = Object.values(map).reduce((n, a) => n + a.length, 0);
   const banner = opts.banner || "";
   const anchorSub = opts.anchorSub || "Mostly Text Too Small";
+  // bilingual: a language tab strip; meta reflects both languages
+  const langTabs = opts.langTabs;
+  const activeLang = opts.activeLang || "hi";
+  const meta = langTabs ? "2 languages · 6 screens each" : `${LANG_LABEL[activeLang]} · 6 screens`;
+  const tabsHTML = langTabs
+    ? `<div class="lang-tabs">${langTabs
+        .map((l) => `<button class="${l === activeLang ? "on" : ""}">${LANG_LABEL[l]}</button>`)
+        .join("")}</div>`
+    : "";
   setPlugin(`
     <div class="res-head"><div class="res-title">Analysis complete</div>
-      <div class="res-meta">हिन्दी · 6 screens</div>
+      <div class="res-meta">${meta}</div>
       <div class="res-actions"><span class="mini tonal">Re-check</span><span class="mini ghost">Preview</span><span class="mini ghost">Export</span><span class="mini ghost">New</span></div>
     </div>
+    ${tabsHTML}
     ${banner}
     <div><span class="anchor-num counter">${total}</span><span class="anchor-unit">findings</span>
       <div class="anchor-sub">${anchorSub}</div></div>
@@ -364,7 +429,7 @@ function revealView() {
     <div class="rv-kicker"><span class="dot" style="background:${TYPE_COLOR.overflow}"></span>Text Overflow</div>
     <div class="rv-title">Place Order Button</div>
     <div class="rv-layer">Checkout · हिन्दी</div>
-    <div class="rv-row"><span class="k">Problem</span><span class="v">Label “ऑर्डर प्लेस करें” is clipped by a fixed width.</span></div>
+    <div class="rv-row"><span class="k">Problem</span><span class="v">Label “अपना ऑर्डर कन्फ़र्म करें” is clipped by a fixed width.</span></div>
     <div class="rv-row"><span class="k">Button width</span><span class="v">Fixed to 120 px</span></div>
     <div class="rv-row"><span class="k">Recommended</span><span class="v">Allow intrinsic sizing (hug contents).</span></div>
     <div class="rv-actions"><span class="mini solid">Reveal on Canvas</span><span class="mini line">See systemic fix</span></div>
@@ -400,7 +465,33 @@ function designSystemView() {
 const STAGE_IDS = [
   "01-selection", "02-language-selected", "03-analysis-progress", "04-preview",
   "05-results", "06-reveal", "07-design-system", "08-recheck", "09-export",
+  // bilingual (Hindi + Tamil simultaneously) + before/after
+  "10-two-languages", "11-bilingual-preview", "12-results-hindi",
+  "13-results-tamil", "14-export-bilingual", "15-before-after",
 ];
+
+// generate view with both languages ticked
+function generateViewBilingual(highlight) {
+  setPlugin(`
+    <div class="pv-title">Localization Pressure Test</div>
+    <div class="pv-sub">Generate localized versions of your screens and discover layout issues before shipping.</div>
+    <div class="pv-label">Choose Languages</div>
+    <div class="opt on">${tick(true)} हिन्दी</div>
+    <div class="opt on">${tick(true)} தமிழ்</div>
+    <div class="field-gap"></div>
+    <div class="pv-label">Translation</div>
+    <div class="opt on">${radio(true)} Demo Dictionary <span class="soon">no key</span></div>
+    <div class="opt">${radio(false)} Google Translate <span class="soon">API key</span></div>
+    <div class="field-gap"></div>
+    <button class="btn primary ${highlight ? "pulse" : ""}">Generate &amp; Test</button>
+    <div class="pv-hint">2 languages · 6 frames selected.</div>
+  `);
+}
+function paintBilingualBadges() {
+  clearBadges();
+  paintBadges(FINDINGS.hi, "hi", true);
+  paintBadges(FINDINGS.ta, "ta", true);
+}
 
 async function goStage(id) {
   window.DEMO.settled = false;
@@ -464,6 +555,64 @@ async function goStage(id) {
         <button class="btn block line" style="border:1px solid var(--line-strong);background:#fff;margin-top:4px">New Analysis</button>
       `);
       await wait(1100); break;
+
+    // ── Bilingual: Hindi + Tamil simultaneously ─────────────────────────────
+    case "10-two-languages":
+      clearBadges(); clearReveal(); showSection(false); showSection2(false); showBeforeAfter(false);
+      showHindi(false); showTamil(false); selectEnglish(true);
+      generateViewBilingual(true); OVERVIEW_EN();
+      await wait(900); break;
+
+    case "11-bilingual-preview":
+      showSection(false); showSection2(false); showBeforeAfter(false); clearBadges();
+      showHindi(true); showTamil(true); await raf();
+      progressView(100, 4, { title: "Analyzing 6 screens · 2 languages", sub: "हिन्दी + தமிழ் · Demo Dictionary" });
+      TRILINGUAL_CAM();
+      await wait(1100); break;
+
+    case "12-results-hindi":
+      showHindi(true); showTamil(true); clearReveal(); showSection(false); showSection2(false);
+      paintBilingualBadges();
+      resultsView({ langTabs: ["hi", "ta"], activeLang: "hi", map: FINDINGS.hi, anchorSub: "Mostly Text Too Small" });
+      LOCALIZED_ROWS_CAM();
+      await wait(1000); break;
+
+    case "13-results-tamil":
+      showHindi(true); showTamil(true); clearReveal(); showSection(false); showSection2(false);
+      paintBilingualBadges();
+      resultsView({ langTabs: ["hi", "ta"], activeLang: "ta", map: FINDINGS.ta, anchorSub: "Tamil expands most — 13 findings" });
+      LOCALIZED_ROWS_CAM();
+      await wait(1000); break;
+
+    case "14-export-bilingual":
+      showHindi(true); showTamil(true); clearReveal(); clearBadges(); showBeforeAfter(false);
+      showSection(true); showSection2(true); await raf(); EXPORT2_CAM();
+      setPlugin(`
+        <div class="banner ok" style="margin-top:4px"><span class="b-ic">✓</span><div><div class="b-t">Export complete</div><div class="b-m">12 localized screens added — हिन्दी and தமிழ் — as two sections.</div></div></div>
+        <div class="pv-label" style="margin-top:6px">Exported</div>
+        <div class="dcard"><div class="d-title" style="margin-top:0">हिन्दी · 6 screens</div><div class="d-desc">Localized copies placed beside the originals.</div></div>
+        <div class="dcard"><div class="d-title" style="margin-top:0">தமிழ் · 6 screens</div><div class="d-desc">A second localized section, one row per language.</div></div>
+        <button class="btn block line" style="border:1px solid var(--line-strong);background:#fff;margin-top:4px">New Analysis</button>
+      `);
+      await wait(1100); break;
+
+    // ── Before / after a systemic fix ───────────────────────────────────────
+    case "15-before-after":
+      clearReveal(); clearBadges(); showSection(false); showSection2(false);
+      showHindi(false); showTamil(false); showBeforeAfter(true); await raf();
+      revealView();
+      // reframe the reveal panel copy toward the fix outcome
+      setPlugin(`
+        <div class="rv-kicker"><span class="dot" style="background:${TYPE_COLOR.overflow}"></span>FIXED-WIDTH BUTTONS</div>
+        <div class="rv-title">Before → After</div>
+        <div class="rv-layer">Place Order · हिन्दी</div>
+        <div class="rv-row"><span class="k">Before</span><span class="v">Fixed 120 px — “अपना ऑर्डर कन्फ़र्म करें” is clipped.</span></div>
+        <div class="rv-row"><span class="k">After</span><span class="v">Hug contents — the full label fits, no clipping.</span></div>
+        <div class="rv-row"><span class="k">Impact</span><span class="v">One component change clears the overflow on 6 screens.</span></div>
+        <div class="banner ok" style="margin-top:16px"><span class="b-ic">✓</span><div><div class="b-t">7 fixed · 4 remaining</div><div class="b-m">Re-check confirms the overflow is resolved.</div></div></div>
+      `);
+      BEFORE_AFTER_CAM();
+      await wait(1100); break;
   }
   window.DEMO.settled = true;
 }
@@ -484,6 +633,8 @@ async function animateCounter(from, to) {
 /* ---- Boot --------------------------------------------------------------- */
 async function boot() {
   DATA = await fetch("fake-data.json").then((r) => r.json());
+  FINDINGS = { hi: DATA.findingsByScreen, ta: DATA.findingsTa };
+  RECHECK = { hi: DATA.recheckRemaining, ta: DATA.recheckTa };
   buildWorld();
   await raf();
   window.DEMO = {

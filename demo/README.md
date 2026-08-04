@@ -24,15 +24,23 @@ through every stage and writes nine crisp **2560 × 1600** PNGs to:
 
 ```
 demo/screenshots/
-  01-selection.png        English screens selected, plugin idle
+  # Single-language (Hindi) walkthrough
+  01-selection.png          English screens selected, plugin idle
   02-language-selected.png  Hindi chosen, Generate highlighted
   03-analysis-progress.png  Animated stages, progress ~45%
   04-preview.png            Localized Hindi copies appear on canvas
   05-results.png            Analysis complete · 11 findings, issue cards
   06-reveal.png             Zoom to an overflowing Hindi CTA
-  07-design-system.png      Root-cause systemic fixes
+  07-design-system.png      Root-cause systemic fixes (Screens ↔ Design System)
   08-recheck.png            11 → 4, "7 fixed · 4 remaining"
   09-export.png             Exported हिन्दी section, "Export complete"
+  # Bilingual (Hindi + Tamil simultaneously) + before/after
+  10-two-languages.png      Both हिन्दी + தமிழ் selected, Generate highlighted
+  11-bilingual-preview.png  English → Hindi → Tamil, three rows on canvas
+  12-results-hindi.png      Bilingual results, language tabs, Hindi active (11)
+  13-results-tamil.png      Tamil tab active (13 — "Tamil expands most")
+  14-export-bilingual.png   Two localized sections, "12 localized screens"
+  15-before-after.png       Clipped CTA → hugged CTA, "7 fixed · 4 remaining"
 ```
 
 > If `npm install` already fetched the browser, you can re-capture any time with

@@ -299,7 +299,8 @@ body {
   font-weight: 700; font-size: 13px; padding: 12px; border-radius: 12px; box-shadow: var(--shadow-sm);
   font-family: inherit; white-space: nowrap; overflow: hidden;
 }
-.cta.fixed { width: 108px; margin-left: auto; margin-right: auto; display: block; text-overflow: clip; }
+.cta.fixed { width: 120px; margin-left: auto; margin-right: auto; display: block; text-overflow: clip; }
+.cta.hug { display: inline-block; width: auto; margin-top: 14px; padding: 12px 22px; white-space: nowrap; overflow: visible; }
 
 /* checkout */
 .co-card { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; }
@@ -451,6 +452,27 @@ body {
 .banner .b-m { font-size: 11px; color: var(--muted); margin-top: 1px; }
 
 .counter { font-variant-numeric: tabular-nums; }
+
+/* language tabs (bilingual results) */
+.lang-tabs { display: flex; gap: 16px; border-bottom: 1px solid var(--line); margin: 0 0 14px; }
+.lang-tabs button {
+  font-family: var(--indic); font-size: 13px; font-weight: 600;
+  padding: 8px 2px; border: none; background: transparent; color: var(--faint);
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.lang-tabs button.on { color: var(--ink); border-bottom-color: var(--brand); }
+
+/* before / after comparison */
+#beforeafter { position: absolute; display: flex; gap: 44px; }
+#beforeafter.hidden { display: none; }
+.ba-col { display: flex; flex-direction: column; gap: 10px; }
+.ba-tag {
+  font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 8px;
+  align-self: flex-start;
+}
+.ba-tag.bad { background: var(--food-soft); color: var(--food); }
+.ba-tag.good { background: var(--ok-soft); color: var(--ok); }
+.ba-col .phone { width: 250px; height: 512px; }
 
 /* Capture mode — freeze decorative animation so screenshots are crisp & deterministic. */
 .shot .pg-anim,

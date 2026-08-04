@@ -89,6 +89,41 @@
       { "type": "small", "layer": "Row / Subtitle", "detail": "10px" }
     ]
   },
+  "findingsTa": {
+    "home": [
+      { "type": "overflow", "layer": "Search / Placeholder", "detail": "+22px" },
+      { "type": "small", "layer": "Category / Label", "detail": "10px" },
+      { "type": "small", "layer": "Section / Title", "detail": "11px" }
+    ],
+    "restaurant": [
+      { "type": "overflow", "layer": "Add Button", "detail": "clipped" },
+      { "type": "small", "layer": "Item / Price note", "detail": "10px" },
+      { "type": "overflow", "layer": "Item / Name", "detail": "+16px" }
+    ],
+    "checkout": [
+      { "type": "overflow", "layer": "Place Order Button", "detail": "120px fixed" },
+      { "type": "small", "layer": "Field / Label", "detail": "11px" },
+      { "type": "clip", "layer": "Address / Text", "detail": "2 lines" }
+    ],
+    "orders": [
+      { "type": "overflow", "layer": "Status Pill", "detail": "+18px" },
+      { "type": "font", "layer": "Badge / Tag", "detail": "tofu" }
+    ],
+    "profile": [
+      { "type": "small", "layer": "Row / Title", "detail": "12px" },
+      { "type": "small", "layer": "Row / Subtitle", "detail": "10px" }
+    ]
+  },
+  "recheckTa": {
+    "home": [],
+    "restaurant": [{ "type": "small", "layer": "Item / Price note", "detail": "10px" }],
+    "checkout": [{ "type": "small", "layer": "Field / Label", "detail": "11px" }],
+    "orders": [{ "type": "font", "layer": "Badge / Tag", "detail": "tofu" }],
+    "profile": [
+      { "type": "small", "layer": "Row / Title", "detail": "12px" },
+      { "type": "small", "layer": "Row / Subtitle", "detail": "10px" }
+    ]
+  },
   "rootCauses": [
     {
       "pattern": "FIXED-WIDTH BUTTONS",
@@ -151,7 +186,7 @@
       "Change": "बदलें",
       "Payment Method": "भुगतान का तरीका",
       "Order Summary": "ऑर्डर सारांश",
-      "Place Order": "ऑर्डर प्लेस करें",
+      "Place Order": "अपना ऑर्डर कन्फ़र्म करें",
       "Your Orders": "आपके ऑर्डर",
       "Delivered": "डिलीवर किया गया",
       "On the way": "रास्ते में",
@@ -195,7 +230,7 @@
       "Change": "மாற்று",
       "Payment Method": "பணம் செலுத்தும் முறை",
       "Order Summary": "ஆர்டர் சுருக்கம்",
-      "Place Order": "ஆர்டர் செய்",
+      "Place Order": "உங்கள் ஆர்டரை உறுதிசெய்",
       "Your Orders": "உங்கள் ஆர்டர்கள்",
       "Delivered": "டெலிவரி செய்யப்பட்டது",
       "On the way": "வழியில்",
