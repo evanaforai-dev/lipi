@@ -1,0 +1,69 @@
+# Localization Pressure Test — Demo Walkthrough
+
+A **completely self-contained, fake product demonstration** of the Localization
+Pressure Test plugin. No Figma, no APIs, no network — everything is simulated in
+HTML/CSS/JS and captured with Playwright into presentation-ready screenshots.
+
+It recreates:
+
+- a **fake design-tool desktop** (canvas + a 320px plugin panel on the right),
+- a **fake food-delivery app** (Home, Restaurant, Cart, Checkout, Orders, Profile),
+- **English → Indic** localized copies on the canvas,
+- the plugin's full flow: generate → progress → preview → results → reveal →
+  design-system fixes → re-check → export,
+- and **automatic screenshot capture** of all nine stages.
+
+## Generate all screenshots (single command)
+
+```bash
+npm install && npm run demo
+```
+
+`npm run demo` installs the Chromium binary Playwright needs, then walks the demo
+through every stage and writes nine crisp **2560 × 1600** PNGs to:
+
+```
+demo/screenshots/
+  01-selection.png        English screens selected, plugin idle
+  02-language-selected.png  Hindi chosen, Generate highlighted
+  03-analysis-progress.png  Animated stages, progress ~45%
+  04-preview.png            Localized Hindi copies appear on canvas
+  05-results.png            Analysis complete · 11 findings, issue cards
+  06-reveal.png             Zoom to an overflowing Hindi CTA
+  07-design-system.png      Root-cause systemic fixes
+  08-recheck.png            11 → 4, "7 fixed · 4 remaining"
+  09-export.png             Exported हिन्दी section, "Export complete"
+```
+
+> If `npm install` already fetched the browser, you can re-capture any time with
+> `npm run screenshots`.
+
+## Watch it live in a browser (optional)
+
+```bash
+npm run serve
+```
+
+Then open <http://localhost:4599>. The demo **auto-plays** through every stage —
+no interaction needed. Jump to any single stage with a query param, e.g.
+`http://localhost:4599/?stage=05-results`.
+
+## Languages
+
+Fully realistic examples: **हिन्दी** and **தமிழ்**.
+Believable sample data also included for తెలుగు, ಕನ್ನಡ, മലയാളം, বাংলা, ગુજરાતી, मराठी
+(see `fake-data.json`).
+
+## Files
+
+| File | Role |
+|------|------|
+| `index.html` | Desktop shell (top bar, canvas, plugin panel) |
+| `styles.css` | All styling — neutral, mature productivity-app look |
+| `app.js` | Screen rendering, camera, the 9-stage machine, plugin views |
+| `fake-data.json` | All content: screens, translations, findings, root causes |
+| `serve.mjs` | Zero-dependency static server |
+| `screenshot.mjs` | Playwright capture (starts the server, walks stages, shoots) |
+
+Everything is **deterministic** — no randomness, no clocks, no external requests —
+so the screenshots are identical on every run.

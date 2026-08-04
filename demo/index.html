@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Localization Pressure Test — Demo</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Desktop application chrome -->
+    <div id="app">
+      <header id="topbar">
+        <div class="tb-left">
+          <span class="tb-logo">◆</span>
+          <span class="tb-file">FoodDash — Mobile</span>
+          <span class="tb-sep">/</span>
+          <span class="tb-page">Screens</span>
+        </div>
+        <div class="tb-center" id="tb-zoom">52%</div>
+        <div class="tb-right">
+          <span class="tb-share">Share</span>
+          <span class="tb-avatar">A</span>
+        </div>
+      </header>
+
+      <main id="workspace">
+        <!-- Left: infinite canvas with mobile artboards -->
+        <section id="canvas">
+          <div id="world"></div>
+        </section>
+
+        <!-- Right: the plugin panel (~320px) -->
+        <aside id="plugin"></aside>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

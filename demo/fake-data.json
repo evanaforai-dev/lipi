@@ -1,0 +1,217 @@
+{
+  "meta": {
+    "file": "FoodDash — Mobile.fig",
+    "primaryLanguages": ["hi", "ta"],
+    "otherLanguages": ["te", "kn", "ml", "bn", "gu", "mr"]
+  },
+  "languageLabels": {
+    "en": "English",
+    "hi": "हिन्दी",
+    "ta": "தமிழ்",
+    "te": "తెలుగు",
+    "kn": "ಕನ್ನಡ",
+    "ml": "മലയാളം",
+    "bn": "বাংলা",
+    "gu": "ગુજરાતી",
+    "mr": "मराठी"
+  },
+  "screens": [
+    { "id": "home", "type": "home", "name": "01 · Home" },
+    { "id": "restaurant", "type": "restaurant", "name": "02 · Restaurant" },
+    { "id": "cart", "type": "cart", "name": "03 · Cart" },
+    { "id": "checkout", "type": "checkout", "name": "04 · Checkout" },
+    { "id": "orders", "type": "orders", "name": "05 · Orders" },
+    { "id": "profile", "type": "profile", "name": "06 · Profile" }
+  ],
+  "categories": [
+    { "name": "Pizza", "emoji": "🍕" },
+    { "name": "Burger", "emoji": "🍔" },
+    { "name": "Biryani", "emoji": "🍛" },
+    { "name": "South Indian", "emoji": "🥘" },
+    { "name": "Desserts", "emoji": "🍰" },
+    { "name": "Healthy", "emoji": "🥗" }
+  ],
+  "restaurants": [
+    { "name": "Spice Garden", "cuisine": "South Indian", "sub": "Biryani", "rating": "4.5", "time": "30", "emoji": "🍛" },
+    { "name": "Tokyo Bowl", "cuisine": "Japanese", "sub": "Sushi", "rating": "4.3", "time": "40", "emoji": "🍣" },
+    { "name": "Green Leaf", "cuisine": "Healthy", "sub": "Salads", "rating": "4.6", "time": "25", "emoji": "🥗" }
+  ],
+  "items": [
+    { "name": "Paneer Butter Masala", "price": "₹220", "emoji": "🍛", "tag": "Bestseller" },
+    { "name": "Veg Biryani", "price": "₹180", "emoji": "🍚", "tag": "Recommended" },
+    { "name": "Garlic Naan", "price": "₹60", "emoji": "🫓", "tag": "" }
+  ],
+  "cart": [
+    { "name": "Paneer Butter Masala", "qty": 1, "price": "₹220", "emoji": "🍛" },
+    { "name": "Garlic Naan", "qty": 2, "price": "₹120", "emoji": "🫓" }
+  ],
+  "orders": [
+    { "name": "Spice Garden", "items": "Paneer Butter Masala, Naan", "status": "Delivered", "emoji": "🍛" },
+    { "name": "Tokyo Bowl", "items": "Salmon Nigiri Set", "status": "On the way", "emoji": "🍣" }
+  ],
+  "profileRows": [
+    { "name": "Your Orders", "emoji": "🧾" },
+    { "name": "Payment Methods", "emoji": "💳" },
+    { "name": "Saved Addresses", "emoji": "📍" },
+    { "name": "Help & Support", "emoji": "💬" },
+    { "name": "Settings", "emoji": "⚙️" }
+  ],
+  "findingsByScreen": {
+    "home": [
+      { "type": "small", "layer": "Category / Label", "detail": "11px" },
+      { "type": "overflow", "layer": "Search / Placeholder", "detail": "+18px" }
+    ],
+    "restaurant": [
+      { "type": "overflow", "layer": "Add Button", "detail": "clipped" },
+      { "type": "small", "layer": "Item / Price note", "detail": "10px" }
+    ],
+    "checkout": [
+      { "type": "overflow", "layer": "Place Order Button", "detail": "120px fixed" },
+      { "type": "small", "layer": "Field / Label", "detail": "11px" },
+      { "type": "clip", "layer": "Address / Text", "detail": "2 lines" }
+    ],
+    "orders": [
+      { "type": "overflow", "layer": "Status Pill", "detail": "+14px" },
+      { "type": "font", "layer": "Badge / Tag", "detail": "tofu" }
+    ],
+    "profile": [
+      { "type": "small", "layer": "Row / Title", "detail": "12px" },
+      { "type": "small", "layer": "Row / Subtitle", "detail": "10px" }
+    ]
+  },
+  "recheckRemaining": {
+    "home": [],
+    "restaurant": [],
+    "checkout": [{ "type": "small", "layer": "Field / Label", "detail": "11px" }],
+    "orders": [{ "type": "font", "layer": "Badge / Tag", "detail": "tofu" }],
+    "profile": [
+      { "type": "small", "layer": "Row / Title", "detail": "12px" },
+      { "type": "small", "layer": "Row / Subtitle", "detail": "10px" }
+    ]
+  },
+  "rootCauses": [
+    {
+      "pattern": "FIXED-WIDTH BUTTONS",
+      "title": "Let buttons size to their label",
+      "type": "overflow",
+      "scope": "Appears in 6 screens",
+      "why": "Hindi labels exceed fixed button widths, so text clips or the frame grows.",
+      "rec": "Use intrinsic (hug-contents) sizing.",
+      "action": "Go to component"
+    },
+    {
+      "pattern": "MINIMUM FONT SIZE",
+      "title": "Raise the Devanagari minimum to 15px",
+      "type": "small",
+      "scope": "Found in 18 layers",
+      "why": "Devanagari needs more x-height than Latin to stay legible at small sizes.",
+      "rec": "Minimum 15px for Devanagari text.",
+      "action": null
+    },
+    {
+      "pattern": "LINE HEIGHT",
+      "title": "Loosen line-height for stacked marks",
+      "type": "clip",
+      "scope": "Found in 9 layers",
+      "why": "Tight line-height clips stacked Indic vowel marks.",
+      "rec": "Use 1.4× line-height.",
+      "action": null
+    }
+  ],
+  "translations": {
+    "hi": {
+      "Delivery to": "डिलीवरी यहाँ",
+      "Home": "घर",
+      "Search for dishes, restaurants": "व्यंजन, रेस्तरां खोजें",
+      "Top rated near you": "आपके पास टॉप रेटेड",
+      "Pizza": "पिज़्ज़ा",
+      "Burger": "बर्गर",
+      "Biryani": "बिरयानी",
+      "South Indian": "दक्षिण भारतीय",
+      "Desserts": "मिठाई",
+      "Healthy": "हेल्दी",
+      "Japanese": "जापानी",
+      "Sushi": "सुशी",
+      "Salads": "सलाद",
+      "Free delivery": "मुफ़्त डिलीवरी",
+      "mins": "मिनट",
+      "Add": "जोड़ें",
+      "View Cart": "कार्ट देखें",
+      "Recommended": "अनुशंसित",
+      "Bestseller": "बेस्टसेलर",
+      "Your Cart": "आपका कार्ट",
+      "Subtotal": "उप-योग",
+      "Delivery Fee": "डिलीवरी शुल्क",
+      "Taxes & Charges": "कर और शुल्क",
+      "To Pay": "देय राशि",
+      "Total": "कुल",
+      "Proceed to Checkout": "चेकआउट के लिए आगे बढ़ें",
+      "Checkout": "चेकआउट",
+      "Delivery Address": "डिलीवरी पता",
+      "Change": "बदलें",
+      "Payment Method": "भुगतान का तरीका",
+      "Order Summary": "ऑर्डर सारांश",
+      "Place Order": "ऑर्डर प्लेस करें",
+      "Your Orders": "आपके ऑर्डर",
+      "Delivered": "डिलीवर किया गया",
+      "On the way": "रास्ते में",
+      "Reorder": "फिर से ऑर्डर करें",
+      "Profile": "प्रोफ़ाइल",
+      "Payment Methods": "भुगतान के तरीके",
+      "Saved Addresses": "सहेजे गए पते",
+      "Help & Support": "सहायता और समर्थन",
+      "Settings": "सेटिंग्स",
+      "Log Out": "लॉग आउट"
+    },
+    "ta": {
+      "Delivery to": "டெலிவரி",
+      "Home": "வீடு",
+      "Search for dishes, restaurants": "உணவு, உணவகங்களைத் தேடு",
+      "Top rated near you": "அருகில் சிறந்தவை",
+      "Pizza": "பிட்சா",
+      "Burger": "பர்கர்",
+      "Biryani": "பிரியாணி",
+      "South Indian": "தென் இந்திய",
+      "Desserts": "இனிப்புகள்",
+      "Healthy": "ஆரோக்கியம்",
+      "Japanese": "ஜப்பானிய",
+      "Sushi": "சுஷி",
+      "Salads": "சாலட்",
+      "Free delivery": "இலவச டெலிவரி",
+      "mins": "நிமிடம்",
+      "Add": "சேர்",
+      "View Cart": "கார்ட்டைப் பார்",
+      "Recommended": "பரிந்துரை",
+      "Bestseller": "சிறந்த விற்பனை",
+      "Your Cart": "உங்கள் கார்ட்",
+      "Subtotal": "கூட்டுத்தொகை",
+      "Delivery Fee": "டெலிவரி கட்டணம்",
+      "Taxes & Charges": "வரி & கட்டணங்கள்",
+      "To Pay": "செலுத்த வேண்டியது",
+      "Total": "மொத்தம்",
+      "Proceed to Checkout": "செக்அவுட்டிற்குச் செல்",
+      "Checkout": "செக்அவுட்",
+      "Delivery Address": "டெலிவரி முகவரி",
+      "Change": "மாற்று",
+      "Payment Method": "பணம் செலுத்தும் முறை",
+      "Order Summary": "ஆர்டர் சுருக்கம்",
+      "Place Order": "ஆர்டர் செய்",
+      "Your Orders": "உங்கள் ஆர்டர்கள்",
+      "Delivered": "டெலிவரி செய்யப்பட்டது",
+      "On the way": "வழியில்",
+      "Reorder": "மீண்டும் ஆர்டர்",
+      "Profile": "சுயவிவரம்",
+      "Payment Methods": "பணம் செலுத்தும் முறைகள்",
+      "Saved Addresses": "சேமித்த முகவரிகள்",
+      "Help & Support": "உதவி & ஆதரவு",
+      "Settings": "அமைப்புகள்",
+      "Log Out": "வெளியேறு"
+    },
+    "te": { "Total": "మొత్తం", "Add": "జోడించు", "Place Order": "ఆర్డర్ చేయండి", "Your Cart": "మీ కార్ట్", "Checkout": "చెక్అవుట్", "Home": "హోమ్" },
+    "kn": { "Total": "ಒಟ್ಟು", "Add": "ಸೇರಿಸು", "Place Order": "ಆರ್ಡರ್ ಮಾಡಿ", "Your Cart": "ನಿಮ್ಮ ಕಾರ್ಟ್", "Checkout": "ಚೆಕ್‌ಔಟ್", "Home": "ಮುಖಪುಟ" },
+    "ml": { "Total": "ആകെ", "Add": "ചേർക്കുക", "Place Order": "ഓർഡർ ചെയ്യുക", "Your Cart": "നിങ്ങളുടെ കാർട്ട്", "Checkout": "ചെക്ക്ഔട്ട്", "Home": "ഹോം" },
+    "bn": { "Total": "মোট", "Add": "যোগ করুন", "Place Order": "অর্ডার করুন", "Your Cart": "আপনার কার্ট", "Checkout": "চেকআউট", "Home": "হোম" },
+    "gu": { "Total": "કુલ", "Add": "ઉમેરો", "Place Order": "ઓર્ડર કરો", "Your Cart": "તમારી કાર્ટ", "Checkout": "ચેકઆઉટ", "Home": "હોમ" },
+    "mr": { "Total": "एकूण", "Add": "जोडा", "Place Order": "ऑर्डर करा", "Your Cart": "तुमची कार्ट", "Checkout": "चेकआउट", "Home": "मुख्यपृष्ठ" }
+  }
+}

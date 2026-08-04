@@ -1,0 +1,15 @@
+{
+  "name": "lpt-demo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Fake, self-contained product walkthrough of the Localization Pressure Test plugin — HTML/CSS/JS + Playwright screenshot capture.",
+  "scripts": {
+    "serve": "node serve.mjs",
+    "screenshots": "node screenshot.mjs",
+    "demo": "playwright install chromium && node screenshot.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.48.0"
+  }
+}
