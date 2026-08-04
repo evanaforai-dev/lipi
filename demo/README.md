@@ -47,7 +47,12 @@ demo/screenshots/
   18-go-to-component.png          Jumps to + selects the main component
   19-go-to-component-external.png Red feedback: component from an external library
   20-recheck-on-canvas.png        Green ✓ resolved · red still flagged, on canvas
+  21-reveal-line-clip.png         Reveal: tight line-height clips Devanagari marks
+  22-reveal-missing-font.png      Reveal: tag font lacks glyphs → tofu (▯▯▯)
 ```
+
+All four detection types — overflow (16), text-too-small (17), clipped-lines (21),
+and missing-font (22) — are revealed on the actual screens, not just listed.
 
 `npm run demo` also builds two extra deliverables:
 

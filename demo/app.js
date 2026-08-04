@@ -119,7 +119,7 @@ function checkoutHTML(L) {
   return `<div class="body">
     <div class="scr-title">${T("Checkout", L)}</div>
     <div class="co-card"><div class="co-top"><small>${T("Delivery Address", L)}</small><span class="co-change">${T("Change", L)}</span></div>
-      <b>${T("Home", L)}</b><div class="co-sub">42, MG Road, Indiranagar, Bengaluru 560038</div></div>
+      <b>${T("Home", L)}</b><div class="co-sub addr">${T("42, MG Road, Indiranagar, Bengaluru 560038", L)}</div></div>
     <div class="co-card"><small>${T("Payment Method", L)}</small><b>•••• •••• •••• 4242</b></div>
     <div class="co-card co-sum"><small>${T("Order Summary", L)}</small>
       <div style="height:6px"></div>
@@ -130,13 +130,16 @@ function checkoutHTML(L) {
 }
 
 function ordersHTML(L) {
+  const indic = L !== "en";
+  // A tag whose font lacks glyphs for the script → renders as tofu boxes (missing-font).
+  const tag = indic ? `<span class="otag tofu">▯ ▯ ▯ ▯</span>` : `<span class="otag">Fastest</span>`;
   const cards = DATA.orders
     .map((o) => {
       const done = o.status === "Delivered";
       return `<div class="ocard"><div class="o-top"><div class="o-th">${o.emoji}</div>
         <div style="flex:1"><div class="o-name">${o.name}</div><div class="o-items">${o.items}</div></div>
         <span class="pill ${done ? "done" : "way"}">${T(o.status, L)}</span></div>
-        <div class="o-foot"><span class="muted" style="font-size:11px">₹398 · 2 items</span>
+        <div class="o-foot"><span class="o-foot-l">${tag}<span class="muted" style="font-size:11px">2 items</span></span>
         <span class="reorder">${T("Reorder", L)}</span></div></div>`;
     })
     .join("");
@@ -532,6 +535,8 @@ const STAGE_IDS = [
   // depth: group reveals, go-to-component (success + external), re-check on canvas
   "16-reveal-overflow-group", "17-reveal-small-text", "18-go-to-component",
   "19-go-to-component-external", "20-recheck-on-canvas",
+  // full parity: the remaining two detection types revealed on screen
+  "21-reveal-line-clip", "22-reveal-missing-font",
 ];
 
 // reset canvas decorations not owned by a stage (keeps single-stage jumps clean)
@@ -767,6 +772,27 @@ async function goStage(id) {
       OVERVIEW_HI();
       await animateCounter(11, 4);
       await wait(700); break;
+
+    // ── Remaining detection types: line-clip + missing-font (full parity) ───
+    case "21-reveal-line-clip":
+      showHindi(true); showTamil(false); clearHighlights(); clearBadges();
+      showSection(false); showSection2(false); showBeforeAfter(false); showComponents(false);
+      groupRevealView({ type: "clip", title: "Delivery address", layer: "Checkout · हिन्दी",
+        count: 1, note: "Line-height 0.9× clips the stacked vowel marks (ें, गा).", rec: "Loosen line-height to 1.4× for Devanagari." });
+      await raf();
+      highlightAll("hi", "checkout", ".co-sub.addr", { color: "var(--t-clip)", label: "Clipped lines", below: true });
+      focusPhone("hi", 3, 1.0);
+      await wait(1100); break;
+
+    case "22-reveal-missing-font":
+      showHindi(true); showTamil(false); clearHighlights(); clearBadges();
+      showSection(false); showSection2(false); showBeforeAfter(false); showComponents(false);
+      groupRevealView({ type: "font", title: "Order tag", layer: "Orders · हिन्दी",
+        count: 2, note: "The tag font has no Devanagari glyphs — renders as tofu (▯▯▯).", rec: "Embed a Devanagari-capable font (e.g. Noto Sans)." });
+      await raf();
+      highlightAll("hi", "orders", ".otag.tofu", { color: "var(--t-font)", label: "Unsupported font", below: true });
+      focusPhone("hi", 4, 1.0);
+      await wait(1100); break;
   }
   window.DEMO.settled = true;
 }

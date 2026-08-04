@@ -333,6 +333,8 @@ body {
 .co-card .co-change { color: var(--food); font-weight: 600; font-size: 11px; }
 .co-card b { display: block; font-size: 12.5px; margin-top: 3px; }
 .co-card .co-sub { color: var(--muted); font-size: 11px; margin-top: 2px; line-height: 1.35; }
+/* Indic address: tight line-height clips the stacked vowel marks (line-clip bug). */
+.screen.indic .co-sub.addr { line-height: 0.92; max-height: 22px; overflow: hidden; }
 .co-sum .brow { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); margin-bottom: 7px; }
 .co-sum .brow.total { color: var(--ink); font-weight: 700; }
 
@@ -346,6 +348,9 @@ body {
 .pill.done { background: var(--ok-soft); color: var(--ok); }
 .pill.way { background: #fff3e6; color: #b6741f; }
 .ocard .o-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--line); }
+.ocard .o-foot-l { display: flex; align-items: center; gap: 8px; }
+.otag { font-size: 9px; font-weight: 700; color: var(--muted); border: 1px solid var(--line-strong); border-radius: 5px; padding: 2px 6px; letter-spacing: 0.4px; }
+.otag.tofu { color: #9aa1ab; letter-spacing: 1px; }
 .reorder { border: 1px solid var(--food); color: var(--food); background: #fff; font-weight: 700; font-size: 11px; border-radius: 8px; padding: 5px 12px; }
 
 /* profile */
