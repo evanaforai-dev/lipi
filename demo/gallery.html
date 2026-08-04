@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Localization Pressure Test — All Screens</title>
+    <style>
+      :root { --ink: #16181d; --muted: #6b7280; --line: #e7e9ee; --bg: #f4f5f7; --brand: #2d7df6; }
+      * { box-sizing: border-box; margin: 0; }
+      body { font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); padding: 40px; }
+      header { max-width: 1520px; margin: 0 auto 28px; }
+      h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.3px; }
+      .sub { color: var(--muted); font-size: 14px; margin-top: 4px; }
+      .grid { max-width: 1520px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+      figure { background: #fff; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 2px rgba(16,24,40,0.05); }
+      figure img { display: block; width: 100%; height: auto; border-bottom: 1px solid var(--line); }
+      figcaption { padding: 11px 14px; }
+      .cap-n { font-size: 11px; font-weight: 700; color: var(--brand); font-variant-numeric: tabular-nums; letter-spacing: 0.3px; }
+      .cap-t { font-size: 13px; font-weight: 600; margin-top: 2px; }
+      .cap-d { font-size: 12px; color: var(--muted); margin-top: 1px; line-height: 1.4; }
+      .band { grid-column: 1 / -1; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); padding-top: 6px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Localization Pressure Test — Walkthrough</h1>
+      <div class="sub">A fake, self-contained product demo. FoodDash mobile screens localized into हिन्दी and தமிழ், with layout-pressure QA.</div>
+    </header>
+    <div class="grid" id="grid"></div>
+    <script>
+      const SHOTS = [
+        ["band", "Single-language walkthrough (Hindi)"],
+        ["01-selection", "Frames selected", "Six English screens selected, plugin idle."],
+        ["02-language-selected", "Hindi chosen", "हिन्दी ticked, Generate & Test highlighted."],
+        ["03-analysis-progress", "Analyzing", "Preparing → Translating → Measuring…"],
+        ["04-preview", "Localized preview", "Hindi copies appear beside the English screens."],
+        ["05-results", "Results · Screens", "11 findings, Mostly Text Too Small, issue cards."],
+        ["06-reveal", "Reveal on canvas", "Zoom into an overflowing Hindi CTA."],
+        ["07-design-system", "Design System", "Root-cause systemic fixes (the other lens)."],
+        ["08-recheck", "Re-check", "11 → 4 · 7 fixed, 4 remaining."],
+        ["09-export", "Export", "Localized हिन्दी section added to the page."],
+        ["band", "Bilingual (Hindi + Tamil) & before/after"],
+        ["10-two-languages", "Two languages", "हिन्दी + தமிழ் selected together."],
+        ["11-bilingual-preview", "English → Hindi → Tamil", "Three localized rows on the canvas at once."],
+        ["12-results-hindi", "Bilingual results · Hindi", "Language tabs; Hindi active (11 findings)."],
+        ["13-results-tamil", "Bilingual results · Tamil", "Tamil active (13 — expands most)."],
+        ["14-export-bilingual", "Bilingual export", "Two localized sections, 12 screens."],
+        ["15-before-after", "Before / after a fix", "Clipped CTA → hug-contents CTA."],
+      ];
+      const grid = document.getElementById("grid");
+      for (const s of SHOTS) {
+        if (s[0] === "band") {
+          const b = document.createElement("div");
+          b.className = "band";
+          b.textContent = s[1];
+          grid.appendChild(b);
+          continue;
+        }
+        const [id, title, desc] = s;
+        const fig = document.createElement("figure");
+        fig.innerHTML =
+          `<img src="screenshots/${id}.png" alt="${title}" />` +
+          `<figcaption><div class="cap-n">${id.slice(0, 2)}</div><div class="cap-t">${title}</div><div class="cap-d">${desc}</div></figcaption>`;
+        grid.appendChild(fig);
+      }
+    </script>
+  </body>
+</html>

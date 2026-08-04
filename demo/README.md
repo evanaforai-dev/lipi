@@ -43,8 +43,15 @@ demo/screenshots/
   15-before-after.png       Clipped CTA → hugged CTA, "7 fixed · 4 remaining"
 ```
 
-> If `npm install` already fetched the browser, you can re-capture any time with
-> `npm run screenshots`.
+`npm run demo` also builds two extra deliverables:
+
+- **`contact-sheet.png`** — all 15 stills on one page (source: `gallery.html`).
+- **`demo-walkthrough.webm`** — a ~50s animated recording of the autoplay
+  (camera pans, progress, the 11→4 counter, reveal pulse, bilingual + before/after).
+  WebM plays in Chrome/Edge/VLC (macOS Preview/QuickTime don't play WebM natively).
+
+Regenerate individually with `npm run screenshots`, `npm run gallery`, or `npm run video`.
+See everything together in a browser: `npm run serve` → <http://localhost:4599/gallery.html>
 
 ## Watch it live in a browser (optional)
 

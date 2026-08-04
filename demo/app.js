@@ -640,15 +640,19 @@ async function boot() {
   window.DEMO = {
     initialized: true,
     settled: false,
+    finished: false,
     stages: STAGE_IDS,
     stage: (id) => goStage(id),
     setCameraAnimation: (on) => (camAnim = on),
     async play() {
       camAnim = true;
+      window.DEMO.finished = false;
       for (const id of STAGE_IDS) {
         await goStage(id);
-        await wait(id === "05-results" || id === "07-design-system" ? 2400 : 1500);
+        const dwell = id === "05-results" || id === "07-design-system" || id === "12-results-hindi" || id === "15-before-after" ? 2600 : 1600;
+        await wait(dwell);
       }
+      window.DEMO.finished = true;
     },
   };
 
