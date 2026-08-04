@@ -3,6 +3,7 @@
 import { chromium } from "playwright";
 import path from "node:path";
 import fs from "node:fs";
+import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { createServer } from "./serve.mjs";
 
@@ -38,7 +39,22 @@ async function main() {
 
   await browser.close();
   server.close();
-  console.log("video →", dest);
+  console.log("webm →", dest);
+
+  // Convert to a universally-playable MP4 (H.264) with the bundled ffmpeg binary.
+  const mp4 = path.join(__dirname, "demo-walkthrough.mp4");
+  try {
+    const ffmpeg = (await import("ffmpeg-static")).default;
+    const r = spawnSync(ffmpeg, [
+      "-y", "-i", dest,
+      "-c:v", "libx264", "-pix_fmt", "yuv420p", "-movflags", "+faststart",
+      "-crf", "22", "-r", "30", mp4,
+    ], { stdio: "ignore" });
+    if (r.status === 0) console.log("mp4  →", mp4);
+    else console.warn("mp4 conversion skipped (ffmpeg failed) — keeping .webm");
+  } catch {
+    console.warn("mp4 conversion skipped (ffmpeg-static not installed) — keeping .webm");
+  }
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

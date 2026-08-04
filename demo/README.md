@@ -57,9 +57,11 @@ and missing-font (22) — are revealed on the actual screens, not just listed.
 `npm run demo` also builds two extra deliverables:
 
 - **`contact-sheet.png`** — all 15 stills on one page (source: `gallery.html`).
-- **`demo-walkthrough.webm`** — a ~50s animated recording of the autoplay
-  (camera pans, progress, the 11→4 counter, reveal pulse, bilingual + before/after).
-  WebM plays in Chrome/Edge/VLC (macOS Preview/QuickTime don't play WebM natively).
+- **`demo-walkthrough.mp4`** / **`.webm`** — a ~70s animated recording of the
+  autoplay (camera pans, progress, the 11→4 counter, reveal pulses, bilingual,
+  before/after, and all four problem types). The MP4 (H.264) plays everywhere —
+  QuickTime, Preview, Keynote, PowerPoint; the WebM is the raw recording.
+  MP4 conversion uses the bundled `ffmpeg-static` (no system ffmpeg needed).
 
 Regenerate individually with `npm run screenshots`, `npm run gallery`, or `npm run video`.
 See everything together in a browser: `npm run serve` → <http://localhost:4599/gallery.html>
