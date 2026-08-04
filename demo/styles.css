@@ -504,10 +504,52 @@ body {
 .ba-tag.good { background: var(--ok-soft); color: var(--ok); }
 .ba-col .phone { width: 250px; height: 512px; }
 
+/* ── Delta Engine overlays — the geometry the plugin is measuring ────────── */
+/* width dimension line (draws in left→right) */
+.measure { position: absolute; z-index: 10; height: 12px; }
+.measure .bar { position: absolute; top: 6px; left: 0; right: 0; height: 0; border-top: 1.5px solid var(--food); transform-origin: left; }
+.measure .bar::before, .measure .bar::after { content: ""; position: absolute; top: -4px; width: 1.5px; height: 9px; background: var(--food); }
+.measure .bar::before { left: 0; } .measure .bar::after { right: 0; }
+.measure .lbl { position: absolute; left: 50%; top: -7px; transform: translateX(-50%); background: var(--food); color: #fff; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 4px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.measure.draw .bar { animation: drawx 480ms cubic-bezier(.4,0,.2,1); }
+@keyframes drawx { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* vertical growth arrow (frame grew taller) */
+.grow { position: absolute; z-index: 10; display: flex; flex-direction: column; align-items: center; width: 12px; }
+.grow .stem { width: 1.5px; flex: 1; background: var(--t-overflow); transform-origin: top; }
+.grow .head { width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--t-overflow); }
+.grow .lbl { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); background: var(--t-overflow); color: #fff; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 4px; white-space: nowrap; }
+.grow.draw .stem { animation: drawy 480ms cubic-bezier(.4,0,.2,1); }
+@keyframes drawy { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+
+/* dashed baseline (original English bounds) */
+.baseline { position: absolute; z-index: 8; border: 1.5px dashed rgba(20, 24, 45, 0.32); border-radius: 7px; }
+.baseline .lbl { position: absolute; top: -15px; left: 0; font-size: 9px; color: var(--muted); font-weight: 600; white-space: nowrap; }
+
+/* pressure badge on an affected layer */
+.pressure { position: absolute; z-index: 12; --c: var(--t-overflow); background: var(--c); color: #fff; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 999px; box-shadow: var(--shadow-sm); white-space: nowrap; }
+
+/* on-canvas recommendation chip */
+.reco { position: absolute; z-index: 12; display: inline-flex; align-items: center; gap: 6px; background: var(--ink); color: #fff; font-size: 10px; font-weight: 600; padding: 5px 9px; border-radius: 8px; box-shadow: var(--shadow-md); white-space: nowrap; }
+.reco::before { content: "✓"; color: #7ce0a3; font-weight: 800; }
+.reco::after { content: ""; position: absolute; bottom: -4px; left: 14px; width: 8px; height: 8px; background: var(--ink); transform: rotate(45deg); }
+
+.pop { animation: pop 340ms cubic-bezier(.2,.8,.2,1); }
+@keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* frame-level resolved flash (re-check) */
+.artboard.resolved .phone { animation: resolveFlash 900ms ease; }
+@keyframes resolveFlash { 0% { box-shadow: var(--shadow-md); } 35% { box-shadow: 0 0 0 3px rgba(31,157,87,0.45), var(--shadow-md); } 100% { box-shadow: var(--shadow-md); } }
+
 /* Capture mode — freeze decorative animation so screenshots are crisp & deterministic. */
 .shot .pg-anim,
 .shot .banner,
 .shot .ab-badge,
 .shot .reveal-box,
-.shot .btn.pulse { animation: none !important; }
+.shot .hl-box,
+.shot .btn.pulse,
+.shot .measure .bar,
+.shot .grow .stem,
+.shot .pop,
+.shot .artboard.resolved .phone { animation: none !important; }
 .shot .prog-fill { transition: none !important; }

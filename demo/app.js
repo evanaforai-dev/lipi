@@ -382,6 +382,60 @@ function highlightAll(lang, screenId, selector, opts) {
 function showComponents(on) { document.getElementById("components").classList.toggle("hidden", !on); }
 function pickComponent(on) { document.getElementById("components").classList.toggle("picked", on); }
 
+// ── Delta Engine overlays (measurement lines, growth, baselines, pressure) ──
+function clearDeltas() { document.querySelectorAll(".measure,.grow,.baseline,.pressure,.reco").forEach((n) => n.remove()); }
+const phone = (lang, id) => document.getElementById(`ab-${lang}-${id}`);
+const elIn = (lang, id, sel) => phone(lang, id)?.querySelector(sel);
+function overlayHost(phoneEl) { return phoneEl.querySelector(".screen"); }
+
+function measureWidth(phoneEl, targetEl, label, { below = true } = {}) {
+  const m = document.createElement("div");
+  m.className = "measure draw";
+  m.style.left = targetEl.offsetLeft + "px";
+  m.style.width = targetEl.offsetWidth + "px";
+  m.style.top = targetEl.offsetTop + (below ? targetEl.offsetHeight + 5 : -16) + "px";
+  m.innerHTML = `<div class="bar"></div><div class="lbl">${label}</div>`;
+  overlayHost(phoneEl).appendChild(m);
+}
+function growthArrow(phoneEl, targetEl, label, height = 30) {
+  const g = document.createElement("div");
+  g.className = "grow draw";
+  g.style.left = targetEl.offsetLeft + targetEl.offsetWidth + 6 + "px";
+  g.style.top = targetEl.offsetTop + targetEl.offsetHeight - height + "px";
+  g.style.height = height + "px";
+  g.innerHTML = `<div class="stem"></div><div class="head"></div><div class="lbl">${label}</div>`;
+  overlayHost(phoneEl).appendChild(g);
+}
+function baselineOutline(phoneEl, targetEl, label, shrink = 18) {
+  const b = document.createElement("div");
+  b.className = "baseline";
+  b.style.left = targetEl.offsetLeft - 3 + "px";
+  b.style.top = targetEl.offsetTop - 3 + "px";
+  b.style.width = Math.max(20, targetEl.offsetWidth - shrink) + 6 + "px";
+  b.style.height = targetEl.offsetHeight + 6 + "px";
+  if (label) b.innerHTML = `<span class="lbl">${label}</span>`;
+  overlayHost(phoneEl).appendChild(b);
+}
+function pressureBadge(phoneEl, targetEl, text, color = "var(--t-overflow)", { corner = "tr" } = {}) {
+  const p = document.createElement("div");
+  p.className = "pressure pop";
+  p.textContent = text;
+  p.style.setProperty("--c", color);
+  p.style.left = (corner.includes("r") ? targetEl.offsetLeft + targetEl.offsetWidth - 14 : targetEl.offsetLeft - 6) + "px";
+  p.style.top = targetEl.offsetTop - 9 + "px";
+  overlayHost(phoneEl).appendChild(p);
+}
+// Recommendation chip on the canvas, just below the frame (CTAs sit near the phone's bottom edge).
+function recoChip(artboardEl, text) {
+  const pb = artboardEl.querySelector(".phone");
+  const c = document.createElement("div");
+  c.className = "reco pop";
+  c.textContent = text;
+  c.style.left = pb.offsetLeft + "px";
+  c.style.top = pb.offsetTop + pb.offsetHeight + 12 + "px";
+  artboardEl.appendChild(c);
+}
+
 /* ---- Plugin views ------------------------------------------------------- */
 function tick(on) {
   const c = on ? "var(--brand)" : "none";
@@ -541,7 +595,8 @@ const STAGE_IDS = [
 
 // reset canvas decorations not owned by a stage (keeps single-stage jumps clean)
 function resetCanvas() {
-  clearHighlights(); clearReveal(); clearBadges();
+  clearHighlights(); clearReveal(); clearBadges(); clearDeltas();
+  document.querySelectorAll(".artboard.resolved").forEach((a) => a.classList.remove("resolved"));
   showSection(false); showSection2(false); showBeforeAfter(false);
   showComponents(false); pickComponent(false);
 }
@@ -605,7 +660,7 @@ function groupRevealView({ type, title, layer, count, note, rec }) {
 
 async function goStage(id) {
   window.DEMO.settled = false;
-  clearHighlights(); // no stray highlight boxes across transitions
+  clearHighlights(); clearDeltas(); // no stray highlights/measurements across transitions
   // Selection outline belongs only to the "frames selected" stages.
   if (id !== "01-selection" && id !== "02-language-selected") selectEnglish(false);
   switch (id) {
@@ -619,51 +674,91 @@ async function goStage(id) {
       generateView(true); OVERVIEW_EN();
       await wait(900); break;
 
-    case "03-analysis-progress":
-      selectEnglish(false); showHindi(false);
-      progressView(45, 2); OVERVIEW_EN();
-      await wait(1100); break;
+    case "03-analysis-progress": {
+      // Measuring: localized copies exist and the Delta Engine is sizing their geometry.
+      showHindi(true); showTamil(false); clearBadges();
+      progressView(45, 2, { title: "Analyzing 6 screens", sub: "Measuring geometry · हिन्दी" });
+      await raf();
+      const rAdd = elIn("hi", "restaurant", ".addbtn");
+      if (rAdd) measureWidth(phone("hi", "restaurant"), rAdd, "62 → 96px");
+      const cCta = elIn("hi", "cart", ".cta");
+      if (cCta) { baselineOutline(phone("hi", "cart"), cCta, "", 60); measureWidth(phone("hi", "cart"), cCta, "measuring…", { below: false }); }
+      focus(frameX(1) + PHONE_W / 2, HI_Y + 256, 0.6);
+      await wait(1200); break;
+    }
 
-    case "04-preview":
-      selectEnglish(false); progressView(100, 4);
-      showHindi(true); await raf(); PREVIEW_CAM();
-      await wait(1100); break;
+    case "04-preview": {
+      // Aha: the Hindi copy of a fixed-width CTA overruns its bounds — measured & flagged at once.
+      showTamil(false); progressView(100, 4);
+      showHindi(true); await raf();
+      paintBadges(DATA.findingsByScreen, "hi");
+      const cta = elIn("hi", "checkout", '[data-cta="checkout"]');
+      if (cta) {
+        const ph = phone("hi", "checkout");
+        baselineOutline(ph, cta, "English fits · 120px", 48);
+        highlight(ph, cta, { color: "var(--t-overflow)", label: "Text Overflow", below: false });
+        pressureBadge(ph, cta, "+48px");
+        recoChip(ph, "Allow intrinsic sizing");
+      }
+      // English checkout (top) vs its Hindi copy (bottom): the same button, now overflowing.
+      focus(frameX(3) + PHONE_W / 2, 610, 0.57);
+      await wait(1500); break;
+    }
 
     case "05-results":
-      showHindi(true); clearReveal(); showSection(false);
+      showHindi(true); showTamil(false); clearReveal(); showSection(false);
       paintBadges(DATA.findingsByScreen); resultsView(); OVERVIEW_HI();
       await wait(1000); break;
 
-    case "06-reveal":
-      showHindi(true); paintBadges(DATA.findingsByScreen);
-      revealView(); await raf(); addReveal(); REVEAL_CAM();
-      await wait(1100); break;
+    case "06-reveal": {
+      // Reveal flies in and explains the geometry: baseline vs needed width, then the fix.
+      showHindi(true); showTamil(false); paintBadges(DATA.findingsByScreen);
+      revealView(); await raf();
+      const cta = elIn("hi", "checkout", '[data-cta="checkout"]');
+      if (cta) {
+        const ph = phone("hi", "checkout");
+        baselineOutline(ph, cta, "English 120px", 48);
+        highlight(ph, cta, { color: "var(--t-overflow)" });
+        pressureBadge(ph, cta, "+48px");
+        measureWidth(ph, cta, "needs 168px", { below: false });
+      }
+      REVEAL_CAM();
+      await wait(1300); break;
+    }
 
-    case "07-design-system":
-      showHindi(true); clearReveal(); paintBadges(DATA.findingsByScreen);
-      designSystemView(); OVERVIEW_HI();
-      await wait(1000); break;
+    case "07-design-system": {
+      // One root cause, illuminated across many screens at once.
+      showHindi(true); showTamil(false); clearReveal(); paintBadges(DATA.findingsByScreen);
+      designSystemView(); await raf();
+      highlightAll("hi", "restaurant", ".addbtn", { color: "var(--t-overflow)" });
+      const cartCta = elIn("hi", "cart", ".cta");
+      if (cartCta) highlight(phone("hi", "cart"), cartCta, { color: "var(--t-overflow)", label: "Same component", below: false });
+      const coCta = elIn("hi", "checkout", '[data-cta="checkout"]');
+      if (coCta) highlight(phone("hi", "checkout"), coCta, { color: "var(--t-overflow)" });
+      focus(frameX(2) + PHONE_W / 2, HI_Y + 256, 0.58);
+      await wait(1300); break;
+    }
 
     case "08-recheck":
-      showHindi(true); clearReveal();
-      paintBadges(DATA.recheckRemaining);
+      showHindi(true); showTamil(false); clearReveal();
       resultsView({
-        map: DATA.recheckRemaining,
+        map: RECHECK.hi,
         anchorSub: "Down from 11 findings",
         banner: `<div class="banner ok"><span class="b-ic">✓</span><div><div class="b-t">7 fixed · 4 remaining</div><div class="b-m">Re-checked the same screens after your fixes.</div></div></div>`,
       });
       OVERVIEW_HI();
-      await animateCounter(11, 4);
+      await animateRecheckSteps();
       await wait(700); break;
 
     case "09-export":
-      showHindi(true); clearReveal(); clearBadges();
+      showHindi(true); showTamil(false); clearReveal(); clearBadges();
       showSection(true); await raf(); EXPORT_CAM();
       setPlugin(`
         <div class="banner ok" style="margin-top:4px"><span class="b-ic">✓</span><div><div class="b-t">Export complete</div><div class="b-m">6 localized screens added to this page as a section.</div></div></div>
         <div class="pv-label" style="margin-top:6px">Exported</div>
         <div class="dcard"><div class="d-title" style="margin-top:0">हिन्दी · FoodDash</div><div class="d-desc">Home, Restaurant, Cart, Checkout, Orders, Profile — localized copies placed beside the originals.</div></div>
-        <button class="btn block line" style="border:1px solid var(--line-strong);background:#fff;margin-top:4px">New Analysis</button>
+        <div class="res-meta" style="margin-top:12px; color:var(--ok); font-weight:600">✓ Ready for review</div>
+        <button class="btn block line" style="border:1px solid var(--line-strong);background:#fff;margin-top:10px">New Analysis</button>
       `);
       await wait(1100); break;
 
@@ -803,11 +898,31 @@ async function animateCounter(from, to) {
   const steps = 14;
   for (let i = 0; i <= steps; i++) {
     el.textContent = Math.round(from + (to - from) * (i / steps));
-    // fade a couple of badges away mid-count for effect
     if (i === 7) document.querySelectorAll("#ab-hi-home .ab-badge, #ab-hi-restaurant .ab-badge").forEach((b) => b.classList.add("gone"));
     await wait(45);
   }
   el.textContent = to;
+}
+
+// Re-check payoff: count steps down, resolved frames flash green and shed their badge.
+function flashResolved(id) {
+  const a = document.getElementById(`ab-hi-${id}`);
+  if (!a) return;
+  a.classList.add("resolved");
+  a.querySelector(".ab-badge")?.classList.add("gone");
+}
+async function animateRecheckSteps() {
+  const el = pluginEl().querySelector(".anchor-num");
+  paintBadges(FINDINGS.hi, "hi"); // start from the 11-finding state
+  const steps = [11, 9, 7, 4];
+  for (let i = 0; i < steps.length; i++) {
+    if (el) el.textContent = steps[i];
+    if (i === 1) flashResolved("home");
+    if (i === 2) flashResolved("restaurant");
+    await wait(560);
+  }
+  if (el) el.textContent = "4";
+  paintRecheckBadges(FINDINGS.hi, RECHECK.hi); // settle to green ✓ + remaining
 }
 
 /* ---- Boot --------------------------------------------------------------- */
