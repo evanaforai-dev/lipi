@@ -187,29 +187,53 @@ body {
   border-radius: 6px; padding: 2px 8px; font-size: 12px;
 }
 
-/* reveal highlight overlay (placed inside a phone) */
-.reveal-box {
+/* reveal highlight overlay (placed inside a phone) — colour via --c */
+.reveal-box, .hl-box {
   position: absolute; z-index: 10;
-  border: 2px solid var(--t-overflow);
+  --c: var(--t-overflow);
+  border: 2px solid var(--c);
   border-radius: 8px;
-  box-shadow: 0 0 0 6px rgba(224,133,66,0.18);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--c) 18%, transparent);
   animation: pulse 1.4s ease-in-out infinite;
 }
 @keyframes pulse {
-  0%, 100% { box-shadow: 0 0 0 5px rgba(224,133,66,0.16); }
-  50% { box-shadow: 0 0 0 11px rgba(224,133,66,0.05); }
+  0%, 100% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--c) 16%, transparent); }
+  50% { box-shadow: 0 0 0 10px color-mix(in srgb, var(--c) 4%, transparent); }
 }
-.reveal-tag {
+.reveal-tag, .hl-tag {
   position: absolute; z-index: 11;
   background: var(--ink); color: #fff;
   font-size: 11px; font-weight: 600;
   padding: 4px 8px; border-radius: 6px;
   white-space: nowrap; box-shadow: var(--shadow-md);
 }
-.reveal-tag::after {
+.reveal-tag::after, .hl-tag::after {
   content: ""; position: absolute; bottom: -4px; left: 14px;
   width: 8px; height: 8px; background: var(--ink); transform: rotate(45deg);
 }
+
+/* canvas component (Go to component target) */
+#components { position: absolute; }
+#components.hidden { display: none; }
+.comp-name { font-size: 12px; color: #8b5cf6; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.comp-frame {
+  width: 260px; background: #fff; border: 1px solid #d9c8f6; border-radius: 12px;
+  padding: 16px; box-shadow: var(--shadow-md); display: flex; flex-direction: column; gap: 12px;
+}
+#components.picked .comp-frame { outline: 2px solid #8b5cf6; outline-offset: 3px; }
+.comp-frame .cf-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); }
+.comp-btn { background: var(--food); color: #fff; font-weight: 700; font-size: 13px; text-align: center; padding: 11px; border-radius: 10px; }
+.comp-btn.ghost { background: #fff; color: var(--food); border: 1px solid var(--food); }
+.picked-tag {
+  position: absolute; top: -12px; left: 0; z-index: 12;
+  background: #8b5cf6; color: #fff; font-size: 10px; font-weight: 700;
+  padding: 3px 8px; border-radius: 6px; opacity: 0; transition: opacity 300ms ease;
+}
+#components.picked .picked-tag { opacity: 1; }
+
+/* green "resolved" badge for re-check on canvas */
+.ab-badge.ok { color: var(--ok); }
+.ab-badge.ok .chk { color: var(--ok); font-weight: 800; }
 
 /* ============================================================================
    FOOD APP — mobile screen components
@@ -443,6 +467,7 @@ body {
 .dcard .d-rec b { color: var(--ink); }
 .dcard .d-actions { display: flex; gap: 12px; align-items: center; margin-top: 10px; }
 .linklike { font-size: 11px; font-weight: 600; color: var(--brand); display: inline-flex; gap: 5px; align-items: center; }
+.navfail { font-size: 11px; line-height: 1.45; margin-top: 10px; color: var(--danger); }
 
 /* banners */
 .banner { display: flex; gap: 10px; align-items: center; border-radius: 10px; padding: 11px 12px; margin-bottom: 14px; animation: fade 300ms ease-out; }

@@ -41,6 +41,12 @@ demo/screenshots/
   13-results-tamil.png      Tamil tab active (13 — "Tamil expands most")
   14-export-bilingual.png   Two localized sections, "12 localized screens"
   15-before-after.png       Clipped CTA → hugged CTA, "7 fixed · 4 remaining"
+  # Depth — reveals, go-to-component, on-canvas re-check
+  16-reveal-overflow-group.png    Group reveal: 3 clipped "Add to Cart" buttons
+  17-reveal-small-text.png        Group reveal: 6 sub-15px Devanagari labels
+  18-go-to-component.png          Jumps to + selects the main component
+  19-go-to-component-external.png Red feedback: component from an external library
+  20-recheck-on-canvas.png        Green ✓ resolved · red still flagged, on canvas
 ```
 
 `npm run demo` also builds two extra deliverables:

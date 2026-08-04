@@ -27,6 +27,9 @@ const ROW_Y = { en: EN_Y, hi: HI_Y, ta: TA_Y };
 const LANG_LABEL = { hi: "हिन्दी", ta: "தமிழ்" };
 // before/after comparison pair lives in its own clear area
 const BA_Y = 1900;
+// main component lives to the left of the artboards (Go to component target)
+const COMP_X = -440;
+const COMP_Y = 620;
 
 function frameX(i) { return i * COL; }
 // per-language findings, resolved after DATA loads
@@ -208,6 +211,26 @@ function buildWorld() {
 
   // before / after comparison pair (own clear area, shown only on that stage)
   buildBeforeAfter(w);
+  // a main component to "Go to component" into
+  buildComponents(w);
+}
+
+function buildComponents(w) {
+  const el = document.createElement("div");
+  el.id = "components";
+  el.className = "hidden";
+  el.style.left = COMP_X + "px";
+  el.style.top = COMP_Y + "px";
+  el.innerHTML = `
+    <div class="comp-name">◇ Button / Primary</div>
+    <span class="picked-tag">Main component · selected</span>
+    <div class="comp-frame">
+      <div class="cf-label">Default</div>
+      <div class="comp-btn">Place Order</div>
+      <div class="cf-label">Secondary</div>
+      <div class="comp-btn ghost">Add to Cart</div>
+    </div>`;
+  w.appendChild(el);
 }
 
 function sectionEl(id, y, pillText, lastX) {
@@ -271,6 +294,8 @@ const TRILINGUAL_CAM = () => focus(frameX(1) + PHONE_W / 2, (EN_Y + TA_Y + 512) 
 const LOCALIZED_ROWS_CAM = () => focus((frameX(5) + PHONE_W) / 2, (HI_Y + TA_Y + 512) / 2, 0.46);
 const EXPORT2_CAM = () => focus((frameX(5) + PHONE_W) / 2, (HI_Y + TA_Y + 512) / 2 - 10, 0.42);
 const BEFORE_AFTER_CAM = () => focus(frameX(1) + COL / 2 + PHONE_W / 2, BA_Y + 300, 0.92);
+const COMP_CAM = () => focus(COMP_X + 130, COMP_Y + 140, 1.15);
+const focusPhone = (lang, i, scale = 0.95) => focus(frameX(i) + PHONE_W / 2, ROW_Y[lang] + 256, scale);
 
 /* ---- Frame decorations (selection, badges, reveal) ---------------------- */
 function selectEnglish(on) {
@@ -324,6 +349,35 @@ function addReveal() {
 function showSection(on) { document.getElementById("section").classList.toggle("show", on); }
 function showSection2(on) { document.getElementById("section2").classList.toggle("show", on); }
 function showBeforeAfter(on) { document.getElementById("beforeafter").classList.toggle("hidden", !on); }
+
+// Generic on-canvas highlight: a pulsing box (+ optional tag) over element(s) inside a phone.
+function clearHighlights() { document.querySelectorAll(".hl-box,.hl-tag,.reveal-box,.reveal-tag").forEach((n) => n.remove()); }
+function highlight(phoneEl, targetEl, { color = "var(--t-overflow)", label = "", below = false } = {}) {
+  const screen = phoneEl.querySelector(".screen");
+  const box = document.createElement("div");
+  box.className = "hl-box";
+  box.style.setProperty("--c", color);
+  box.style.left = targetEl.offsetLeft - 4 + "px";
+  box.style.top = targetEl.offsetTop - 4 + "px";
+  box.style.width = targetEl.offsetWidth + 8 + "px";
+  box.style.height = targetEl.offsetHeight + 8 + "px";
+  screen.appendChild(box);
+  if (label) {
+    const tag = document.createElement("div");
+    tag.className = "hl-tag";
+    tag.style.setProperty("--c", color);
+    tag.textContent = label;
+    tag.style.left = targetEl.offsetLeft - 4 + "px";
+    tag.style.top = (below ? targetEl.offsetTop + targetEl.offsetHeight + 6 : targetEl.offsetTop - 28) + "px";
+    screen.appendChild(tag);
+  }
+}
+function highlightAll(lang, screenId, selector, opts) {
+  const ph = document.getElementById(`ab-${lang}-${screenId}`);
+  ph.querySelectorAll(selector).forEach((t, i) => highlight(ph, t, i === 0 ? opts : { ...opts, label: "" }));
+}
+function showComponents(on) { document.getElementById("components").classList.toggle("hidden", !on); }
+function pickComponent(on) { document.getElementById("components").classList.toggle("picked", on); }
 
 /* ---- Plugin views ------------------------------------------------------- */
 function tick(on) {
@@ -436,18 +490,25 @@ function revealView() {
   `);
 }
 
-function designSystemView() {
+function designSystemView(opts = {}) {
   const cards = DATA.rootCauses
-    .map(
-      (rc) => `<div class="dcard">
+    .map((rc, i) => {
+      const active = opts.activeIndex === i;
+      const fail = opts.failIndex === i;
+      return `<div class="dcard">
       <div class="rv-kicker"><span class="dot" style="background:${TYPE_COLOR[rc.type]}"></span>${rc.pattern}</div>
       <div class="d-title">${rc.title}</div>
       <div class="d-desc">${rc.why}</div>
       <div class="d-scope">${rc.scope}</div>
       <div class="d-rec"><b>Recommended</b> · ${rc.rec}</div>
-      <div class="d-actions"><span class="linklike">◎ Reveal</span>${rc.action ? `<span class="linklike" style="color:var(--ink)">${rc.action} →</span>` : ""}</div>
-    </div>`
-    )
+      <div class="d-actions"><span class="linklike">◎ Reveal</span>${
+        rc.action
+          ? `<span class="linklike" style="color:${active ? "#fff" : "var(--ink)"};${active ? "background:var(--brand);padding:4px 10px;border-radius:7px;" : ""}">${rc.action} →</span>`
+          : ""
+      }</div>
+      ${fail ? `<div class="navfail">Couldn’t open this component — it’s from an external library, so Figma can’t jump to it. Open that library file to edit it.</div>` : ""}
+    </div>`;
+    })
     .join("");
   setPlugin(`
     <div class="res-head"><div class="res-title">Analysis complete</div>
@@ -468,7 +529,17 @@ const STAGE_IDS = [
   // bilingual (Hindi + Tamil simultaneously) + before/after
   "10-two-languages", "11-bilingual-preview", "12-results-hindi",
   "13-results-tamil", "14-export-bilingual", "15-before-after",
+  // depth: group reveals, go-to-component (success + external), re-check on canvas
+  "16-reveal-overflow-group", "17-reveal-small-text", "18-go-to-component",
+  "19-go-to-component-external", "20-recheck-on-canvas",
 ];
+
+// reset canvas decorations not owned by a stage (keeps single-stage jumps clean)
+function resetCanvas() {
+  clearHighlights(); clearReveal(); clearBadges();
+  showSection(false); showSection2(false); showBeforeAfter(false);
+  showComponents(false); pickComponent(false);
+}
 
 // generate view with both languages ticked
 function generateViewBilingual(highlight) {
@@ -492,9 +563,44 @@ function paintBilingualBadges() {
   paintBadges(FINDINGS.hi, "hi", true);
   paintBadges(FINDINGS.ta, "ta", true);
 }
+// Re-check on canvas: green ✓ on fully-resolved screens, red count on those still remaining.
+function paintRecheckBadges(before, after) {
+  clearBadges();
+  DATA.screens.forEach((s) => {
+    const had = (before[s.id] || []).length;
+    const left = (after[s.id] || []).length;
+    if (!had) return;
+    const ph = document.getElementById(`ab-hi-${s.id}`);
+    if (!ph) return;
+    const badge = document.createElement("div");
+    if (left === 0) {
+      badge.className = "ab-badge ok";
+      badge.innerHTML = `<span class="chk">✓</span><span>Fixed</span>`;
+    } else {
+      const types = [...new Set(after[s.id].map((f) => f.type))];
+      badge.className = "ab-badge";
+      badge.innerHTML = `<span class="dots">${types.map((t) => `<span class="d" style="background:${TYPE_COLOR[t]}"></span>`).join("")}</span><span>${left}</span>`;
+    }
+    ph.appendChild(badge);
+  });
+}
+// A reveal detail panel for a group of same-type findings.
+function groupRevealView({ type, title, layer, count, note, rec }) {
+  setPlugin(`
+    <div class="back">‹ Back to results</div>
+    <div class="rv-kicker"><span class="dot" style="background:${TYPE_COLOR[type]}"></span>${TYPE_LABEL[type]}</div>
+    <div class="rv-title">${title}</div>
+    <div class="rv-layer">${layer}</div>
+    <div class="rv-row"><span class="k">Flagged</span><span class="v">${count} layers on this screen</span></div>
+    <div class="rv-row"><span class="k">Measured</span><span class="v">${note}</span></div>
+    <div class="rv-row"><span class="k">Recommended</span><span class="v">${rec}</span></div>
+    <div class="rv-actions"><span class="mini solid">Reveal all on Canvas</span><span class="mini line">See systemic fix</span></div>
+  `);
+}
 
 async function goStage(id) {
   window.DEMO.settled = false;
+  clearHighlights(); // no stray highlight boxes across transitions
   // Selection outline belongs only to the "frames selected" stages.
   if (id !== "01-selection" && id !== "02-language-selected") selectEnglish(false);
   switch (id) {
@@ -613,6 +719,54 @@ async function goStage(id) {
       `);
       BEFORE_AFTER_CAM();
       await wait(1100); break;
+
+    // ── Depth: group reveals highlighting many layers on screen ─────────────
+    case "16-reveal-overflow-group":
+      showHindi(true); showTamil(false); clearHighlights(); clearBadges();
+      showSection(false); showSection2(false); showBeforeAfter(false); showComponents(false);
+      groupRevealView({ type: "overflow", title: "“Add to Cart” buttons", layer: "Restaurant · हिन्दी",
+        count: 3, note: "Fixed 62 px — Hindi label overruns the button.", rec: "Hug contents so each button fits its label." });
+      await raf();
+      highlightAll("hi", "restaurant", ".addbtn", { color: "var(--t-overflow)", label: "Overflow · clipped", below: true });
+      focusPhone("hi", 1, 0.92);
+      await wait(1100); break;
+
+    case "17-reveal-small-text":
+      showHindi(true); showTamil(false); clearHighlights(); clearBadges();
+      showSection(false); showSection2(false); showBeforeAfter(false); showComponents(false);
+      groupRevealView({ type: "small", title: "Category & label text", layer: "Home · हिन्दी",
+        count: 6, note: "10–11 px — below the 15 px Devanagari minimum.", rec: "Raise Devanagari text to a 15 px minimum." });
+      await raf();
+      highlightAll("hi", "home", ".cat span", { color: "var(--t-small)", label: "Text too small · 11px" });
+      focusPhone("hi", 0, 0.95);
+      await wait(1100); break;
+
+    // ── Go to component (success + external library) ────────────────────────
+    case "18-go-to-component":
+      resetCanvas(); showHindi(false); showTamil(false);
+      showComponents(true); await raf(); pickComponent(true);
+      designSystemView({ activeIndex: 0 });
+      COMP_CAM();
+      await wait(1100); break;
+
+    case "19-go-to-component-external":
+      resetCanvas(); showHindi(true); showTamil(false);
+      paintBadges(FINDINGS.hi, "hi");
+      designSystemView({ failIndex: 0 });
+      OVERVIEW_HI();
+      await wait(1100); break;
+
+    // ── Re-check marks resolved vs remaining on the canvas ──────────────────
+    case "20-recheck-on-canvas":
+      resetCanvas(); showHindi(true); showTamil(false);
+      paintRecheckBadges(FINDINGS.hi, RECHECK.hi);
+      resultsView({
+        map: RECHECK.hi, anchorSub: "Down from 11 findings",
+        banner: `<div class="banner ok"><span class="b-ic">✓</span><div><div class="b-t">7 fixed · 4 remaining</div><div class="b-m">Green ✓ = resolved on canvas · red = still flagged.</div></div></div>`,
+      });
+      OVERVIEW_HI();
+      await animateCounter(11, 4);
+      await wait(700); break;
   }
   window.DEMO.settled = true;
 }
