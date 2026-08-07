@@ -176,6 +176,9 @@ body {
   transition: opacity 600ms ease;
 }
 #section.show { opacity: 1; }
+/* Fully hide export sections (incl. their title) until shown — no bleed-through. */
+#section:not(.show), #section2:not(.show) { visibility: hidden; }
+#section.show, #section2.show { visibility: visible; }
 #section .sec-title {
   position: absolute; top: -30px; left: 4px;
   font-size: 13px; font-weight: 600; color: var(--muted);
@@ -488,6 +491,30 @@ body {
 #film-fade.on { opacity: 1; }
 .film-mode #tb-zoom { visibility: hidden; }
 
+/* Subtle explanatory caption — small, neutral, lower hierarchy than the UI. */
+#film-cap {
+  position: fixed; left: calc((100% - 320px) / 2); transform: translateX(-50%);
+  bottom: 54px; z-index: 60; pointer-events: none; text-align: center;
+  opacity: 0; transition: opacity 460ms ease;
+}
+#film-cap.on { opacity: 1; }
+#film-cap .cap-inner {
+  display: inline-block; background: rgba(255, 255, 255, 0.94);
+  border: 1px solid var(--line); box-shadow: var(--shadow-sm); border-radius: 12px; padding: 9px 16px;
+}
+#film-cap .c1 { font-size: 13px; font-weight: 500; color: var(--ink); letter-spacing: 0.1px; }
+#film-cap.title .c1 { font-size: 15px; font-weight: 600; }
+#film-cap .c2 { font-size: 12.5px; font-weight: 400; color: var(--muted); margin-top: 3px; }
+#film-cap .num { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+/* Evaluation "alive" cues — a soft scan sweep and gently breathing selection. */
+#scan {
+  position: absolute; top: 0; bottom: 0; width: 170px; z-index: 6; pointer-events: none; opacity: 0;
+  background: linear-gradient(90deg, transparent, rgba(20, 24, 45, 0.05), transparent);
+}
+@keyframes breathe { 0%, 100% { box-shadow: 0 0 0 0 rgba(45, 125, 246, 0); } 50% { box-shadow: 0 0 0 3px rgba(45, 125, 246, 0.10); } }
+.film-mode .artboard.selected .phone { animation: breathe 2.8s ease-in-out infinite; }
+
 /* language tabs (bilingual results) */
 .lang-tabs { display: flex; gap: 16px; border-bottom: 1px solid var(--line); margin: 0 0 14px; }
 .lang-tabs button {
@@ -539,8 +566,9 @@ body {
 .reco::before { content: "✓"; color: #7ce0a3; font-weight: 800; }
 .reco::after { content: ""; position: absolute; bottom: -4px; left: 14px; width: 8px; height: 8px; background: var(--ink); transform: rotate(45deg); }
 
-.pop { animation: pop 340ms cubic-bezier(.2,.8,.2,1); }
-@keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+/* Gentle entrance — eases in, never overshoots or bounces. */
+.pop { animation: pop 360ms cubic-bezier(.22,.61,.36,1); }
+@keyframes pop { from { transform: scale(.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
 /* frame-level resolved flash (re-check) */
 .artboard.resolved .phone { animation: resolveFlash 900ms ease; }

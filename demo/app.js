@@ -301,6 +301,53 @@ function filmFade() {
   if (!f) { f = document.createElement("div"); f.id = "film-fade"; document.body.appendChild(f); }
   setTimeout(() => f.classList.add("on"), 20);
 }
+// Subtle caption. c1 may contain HTML (e.g. animated numbers). isTitle = the opening card.
+function caption(c1, c2, isTitle) {
+  let el = document.getElementById("film-cap");
+  if (!el) { el = document.createElement("div"); el.id = "film-cap"; document.body.appendChild(el); }
+  el.className = isTitle ? "title" : "";
+  el.innerHTML = `<div class="cap-inner"><div class="c1">${c1}</div>${c2 ? `<div class="c2">${c2}</div>` : ""}</div>`;
+  setTimeout(() => el.classList.add("on"), 20);
+}
+function captionOut() { document.getElementById("film-cap")?.classList.remove("on"); }
+// A soft scan sweep across the frames — invisible tooling made visible for a moment.
+async function scanSweep() {
+  const c = canvasEl();
+  let s = document.getElementById("scan");
+  if (!s) { s = document.createElement("div"); s.id = "scan"; c.appendChild(s); }
+  s.style.transition = "none"; s.style.left = "-170px"; s.style.opacity = "0";
+  await wait(30);
+  s.style.transition = "left 1500ms cubic-bezier(.4,0,.2,1), opacity 400ms ease";
+  s.style.opacity = "1"; s.style.left = c.clientWidth + "px";
+  setTimeout(() => (s.style.opacity = "0"), 1200);
+}
+// Overflow "under pressure": the fixed button briefly lets the label push out, then clamps back.
+async function strainOverflow(el) {
+  el.style.transition = "width 240ms cubic-bezier(.4,0,.2,1)";
+  el.style.width = "152px"; // tries to fit its translated label…
+  await wait(250);
+  el.style.width = ""; // …but the fixed width wins → the text clips.
+  await wait(220);
+}
+function appendBadge(lang, sid, findings) {
+  const ph = document.getElementById(`ab-${lang}-${sid}`);
+  if (!ph) return;
+  const types = [...new Set(findings.map((f) => f.type))];
+  const b = document.createElement("div");
+  b.className = "ab-badge pop";
+  b.innerHTML = `<span class="dots">${types.map((t) => `<span class="d" style="background:${TYPE_COLOR[t]}"></span>`).join("")}</span><span>${findings.length}</span>`;
+  ph.appendChild(b);
+}
+// Issue markers appear progressively, one screen at a time (not all at once).
+async function revealBadgesProgressive(map, lang = "hi") {
+  clearBadges();
+  for (const s of DATA.screens) {
+    const f = map[s.id] || [];
+    if (!f.length) continue;
+    appendBadge(lang, s.id, f);
+    await wait(130);
+  }
+}
 
 // camera framings per stage
 const OVERVIEW_EN = () => focus((frameX(5) + PHONE_W) / 2, 250, 0.52);
@@ -952,52 +999,70 @@ async function film() {
 
   // ── Scene 1 · 0–3s — "This is a Figma plugin." English frames, selected. ──
   generateView(false);
-  selectEnglish(true);
+  selectEnglish(true); // selection breathes gently (film-mode)
   cineFocus((frameX(4) + PHONE_W) / 2, 250, 0.5, 0); // establish, instant
-  await wait(700);
-  cineFocus(frameX(1) + PHONE_W / 2, 250, 0.66, 2700, "cubic-bezier(.4,0,.2,1)"); // slow, confident push
-  await wait(2700);
+  caption("Localization Pressure Test", "Find layout issues before you ship.", true);
+  await wait(900);
+  cineFocus(frameX(1) + PHONE_W / 2, 250, 0.66, 2600, "cubic-bezier(.4,0,.2,1)"); // slow, confident push
+  await wait(1900);
+  captionOut();
+  await wait(400);
 
   // ── Scene 2 · 3–7s — Generate → Hindi appears → it breaks. ──
   generateView(true);
+  caption("Translating selected screens…");
   await wait(450);
   progressView(80, 1, { title: "Localizing…", sub: "हिन्दी" }); // a flash, not a dwell
   selectEnglish(false);
   showHindi(true); await raf();
   // English checkout (fine) sits directly above its Hindi copy (broken).
   cineFocus(frameX(3) + PHONE_W / 2, 600, 0.6, 1300);
-  await wait(1000);
+  await wait(900);
+  captionOut();
   const coCta = elIn("hi", "checkout", '[data-cta="checkout"]');
   const coPh = phone("hi", "checkout");
+  // the layout visibly pushes against its bounds before the warning appears
+  if (coCta) await strainOverflow(coCta);
   if (coCta) { highlight(coPh, coCta, { color: "var(--t-overflow)", label: "Text Overflow", below: false }); pressureBadge(coPh, coCta, "+48px"); }
-  await wait(2400);
+  await wait(1700);
 
   // ── Scene 3 · 7–12s — Analysis reveals the finding, with the geometry. ──
-  resultsView(); paintBadges(DATA.findingsByScreen, "hi");
+  caption("Evaluating layouts…");
+  resultsView();
+  scanSweep(); // a soft scan passes across the frames
   if (coCta) { baselineOutline(coPh, coCta, "English 120px", 48); measureWidth(coPh, coCta, "needs 168px", { below: false }); recoChip(coPh, "Allow intrinsic sizing"); }
   cineFocus(frameX(3) + PHONE_W / 2, HI_Y + 415, 1.5, 1500); // fly into the failure
-  await wait(2800);
+  await wait(2300);
+  await revealBadgesProgressive(DATA.findingsByScreen, "hi"); // markers appear one screen at a time
+  captionOut();
   cineFocus(frameX(0) + PHONE_W / 2, HI_Y + 300, 1.0, 1300); // and a second kind of failure
   highlightAll("hi", "home", ".cat span", { color: "var(--t-small)", label: "Text too small" });
-  await wait(2100);
+  await wait(1600);
 
   // ── Scene 4 · 12–19s — HERO: one component, failing across many screens. ──
   clearHighlights(); clearDeltas();
   cineFocus(frameX(2) + PHONE_W / 2, HI_Y + 256, 0.56, 1700, "cubic-bezier(.5,0,.1,1)"); // pull back to the row
   await wait(1300);
   // the same button lights up, screen by screen — the pattern reveals itself
-  highlightAll("hi", "restaurant", ".addbtn", { color: "var(--t-overflow)" }); await wait(560);
-  { const e = elIn("hi", "cart", ".cta"); if (e) highlight(phone("hi", "cart"), e, { color: "var(--t-overflow)" }); } await wait(560);
-  { const e = elIn("hi", "checkout", '[data-cta="checkout"]'); if (e) highlight(phone("hi", "checkout"), e, { color: "var(--t-overflow)", label: "Same component", below: false }); } await wait(700);
+  highlightAll("hi", "restaurant", ".addbtn", { color: "var(--t-overflow)" }); await wait(540);
+  { const e = elIn("hi", "cart", ".cta"); if (e) highlight(phone("hi", "cart"), e, { color: "var(--t-overflow)" }); } await wait(540);
+  { const e = elIn("hi", "checkout", '[data-cta="checkout"]'); if (e) highlight(phone("hi", "checkout"), e, { color: "var(--t-overflow)", label: "Same component", below: false }); } await wait(600);
   designSystemView(); // …and collapses into one root cause: Fixed-width buttons · 6 screens
-  await wait(3800); // hero: hold on "Appears in 6 screens"
+  caption('<span class="num">11</span> findings → <span class="num">3</span> root causes');
+  await wait(3600); // hero: hold on "Appears in 6 screens"
+  captionOut();
 
   // ── Scene 5 · 19–25s — Fix once → Re-check → momentum. ──
   clearHighlights();
+  caption("Fix once — updates every affected screen.");
   resultsView({ map: RECHECK.hi, anchorSub: "Down from 11 findings", banner: `<div class="banner ok"><span class="b-ic">✓</span><div><div class="b-t">7 fixed · 4 remaining</div><div class="b-m">One component fix — re-checked.</div></div></div>` });
   cineFocus((frameX(5) + PHONE_W) / 2, HI_Y + 256, 0.52, 1300);
+  await wait(1500);
+  caption("Re-checking…");
   await animateRecheckSteps(); // 11 → 9 → 7 → 4, frames flash green
-  await wait(2400);
+  caption('<span class="num">11</span> → <span class="num">4</span> issues');
+  await wait(1500);
+  captionOut();
 
   // ── Scene 6 · 25–30s — Export → clean localized canvas → hold → fade. ──
   clearBadges(); clearHighlights(); clearDeltas();
@@ -1005,7 +1070,7 @@ async function film() {
   showSection(true); await raf();
   setPlugin(`<div class="banner ok" style="margin-top:4px"><span class="b-ic">✓</span><div><div class="b-t">Export complete</div><div class="b-m">6 localized screens · ready for review</div></div></div>`);
   cineFocus((frameX(5) + PHONE_W) / 2, HI_Y + 205, 0.5, 1900, "cubic-bezier(.4,0,.2,1)");
-  await wait(3200); // hold on the clean localized canvas
+  await wait(2800); // hold on the clean localized canvas
   filmFade();
   await wait(1100);
   window.DEMO.finished = true;
