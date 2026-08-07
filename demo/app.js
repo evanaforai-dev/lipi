@@ -5,7 +5,8 @@
    ========================================================================== */
 
 let DATA = null;
-const TYPE_COLOR = { overflow: "#e08542", small: "#7b6bec", clip: "#3e9be9", font: "#e0576b" };
+// One accent for every issue type — types are distinguished by name, never by competing colour.
+const TYPE_COLOR = { overflow: "var(--accent)", small: "var(--accent)", clip: "var(--accent)", font: "var(--accent)" };
 const TYPE_LABEL = { overflow: "Text overflow", small: "Text too small", clip: "Clipped lines", font: "Unsupported font" };
 
 const world = () => document.getElementById("world");
@@ -337,6 +338,18 @@ function appendBadge(lang, sid, findings) {
   b.className = "ab-badge pop";
   b.innerHTML = `<span class="dots">${types.map((t) => `<span class="d" style="background:${TYPE_COLOR[t]}"></span>`).join("")}</span><span>${findings.length}</span>`;
   ph.appendChild(b);
+}
+// Pressure signature: put the localized layouts "under load" during evaluation, relax after fix.
+function pressureOn(lang = "hi") { DATA.screens.forEach((s) => document.getElementById(`ab-${lang}-${s.id}`)?.classList.add("under-pressure")); }
+function pressureOff(lang = "hi") { DATA.screens.forEach((s) => document.getElementById(`ab-${lang}-${s.id}`)?.classList.remove("under-pressure")); }
+function relaxLayouts(lang = "hi") {
+  DATA.screens.forEach((s) => {
+    const a = document.getElementById(`ab-${lang}-${s.id}`);
+    if (!a) return;
+    a.classList.remove("under-pressure");
+    a.classList.add("relaxed");
+    setTimeout(() => a.classList.remove("relaxed"), 760);
+  });
 }
 // Issue markers appear progressively, one screen at a time (not all at once).
 async function revealBadgesProgressive(map, lang = "hi") {
@@ -1029,6 +1042,7 @@ async function film() {
   // ── Scene 3 · 7–12s — Analysis reveals the finding, with the geometry. ──
   caption("Evaluating layouts…");
   resultsView();
+  pressureOn(); // the localized layouts go under load — the signature "pressure"
   scanSweep(); // a soft scan passes across the frames
   if (coCta) { baselineOutline(coPh, coCta, "English 120px", 48); measureWidth(coPh, coCta, "needs 168px", { below: false }); recoChip(coPh, "Allow intrinsic sizing"); }
   cineFocus(frameX(3) + PHONE_W / 2, HI_Y + 415, 1.5, 1500); // fly into the failure
@@ -1055,6 +1069,7 @@ async function film() {
   // ── Scene 5 · 19–25s — Fix once → Re-check → momentum. ──
   clearHighlights();
   caption("Fix once — updates every affected screen.");
+  relaxLayouts(); // the one fix relaxes the whole system back to equilibrium
   resultsView({ map: RECHECK.hi, anchorSub: "Down from 11 findings", banner: `<div class="banner ok"><span class="b-ic">✓</span><div><div class="b-t">7 fixed · 4 remaining</div><div class="b-m">One component fix — re-checked.</div></div></div>` });
   cineFocus((frameX(5) + PHONE_W) / 2, HI_Y + 256, 0.52, 1300);
   await wait(1500);

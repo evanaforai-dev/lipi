@@ -67,6 +67,14 @@ and missing-font (22) — are revealed on the actual screens, not just listed.
   The MP4s (H.264) play everywhere (QuickTime, Preview, Keynote, PowerPoint) via
   the bundled `ffmpeg-static`; the WebMs are the raw recordings.
 
+**Launch stills** — `npm run stills` renders art-directed marketing images into
+`demo/stills/`, all sharing one accent system and a consistent caption card:
+`01-hero … 08-export` (one idea each), `cover.png` (beauty shot), `social.png`
+(1200×630 OG), `thumbnail.png` (16:9), `poster.png` (video poster). Design
+language: a **single accent** (`#3e63f0`) carries every tool signal — selection,
+measurements, issue markers, component relationships — while the demo app keeps
+its own red brand as *content*, and green means *resolved* only.
+
 Regenerate individually with `npm run screenshots`, `npm run gallery`, or `npm run video`.
 See everything together in a browser: `npm run serve` → <http://localhost:4599/gallery.html>
 
