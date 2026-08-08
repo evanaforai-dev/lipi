@@ -3,7 +3,7 @@
    Neutral, mature productivity-app styling. No gradients, no glassmorphism.
    ========================================================================== */
 :root {
-  --canvas-bg: #eef0f3;
+  --canvas-bg: #10131a; /* dark workspace — white product surfaces float on it */
   --panel: #ffffff;
   --ink: #14161b;
   --muted: #6b7280;
@@ -56,20 +56,20 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 0 14px;
-  background: #fff;
-  border-bottom: 1px solid var(--line);
+  background: #161a23;
+  border-bottom: 1px solid #232936;
   font-size: 12px;
-  color: var(--muted);
+  color: #8a93a3;
   z-index: 20;
 }
 .tb-left { display: flex; align-items: center; gap: 8px; }
 .tb-logo { color: var(--food); font-size: 14px; }
-.tb-file { color: var(--ink); font-weight: 600; }
-.tb-sep { color: var(--faint); }
+.tb-file { color: #e6e9ef; font-weight: 600; }
+.tb-sep { color: #545b6a; }
 .tb-center {
   font-variant-numeric: tabular-nums;
-  color: var(--muted);
-  border: 1px solid var(--line);
+  color: #9aa3b3;
+  border: 1px solid #2a313f;
   border-radius: 6px;
   padding: 3px 8px;
 }
@@ -89,7 +89,7 @@ body {
   flex: 1;
   overflow: hidden;
   background: var(--canvas-bg);
-  background-image: radial-gradient(circle, #d8dbe1 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgba(155, 166, 186, 0.09) 1px, transparent 1px);
   background-size: 26px 26px;
 }
 #world {
@@ -126,7 +126,7 @@ body {
   background: #fff;
   border-radius: 22px;
   border: 1px solid var(--line);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
   overflow: hidden;
 }
 .artboard.selected .phone {
@@ -492,7 +492,7 @@ body {
 .counter { font-variant-numeric: tabular-nums; }
 
 /* Film cut — cinematic fade, and hide the live zoom readout (a screen-recording tell). */
-#film-fade { position: fixed; inset: 0; background: #fff; opacity: 0; z-index: 9999; pointer-events: none; transition: opacity 900ms ease; }
+#film-fade { position: fixed; inset: 0; background: var(--canvas-bg); opacity: 0; z-index: 9999; pointer-events: none; transition: opacity 900ms ease; }
 #film-fade.on { opacity: 1; }
 .film-mode #tb-zoom { visibility: hidden; }
 

@@ -11,6 +11,7 @@
     "video": "node video.mjs",
     "film": "node film.mjs",
     "stills": "node stills.mjs",
+    "posters": "node posters.mjs",
     "demo": "playwright install chromium && node screenshot.mjs && node contact.mjs && node video.mjs"
   },
   "devDependencies": {

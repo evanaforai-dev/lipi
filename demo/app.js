@@ -1,5 +1,5 @@
 /* ============================================================================
-   Localization Pressure Test — fake product demo (no Figma, no network).
+   Lipi — fake product demo (no Figma, no network).
    A deterministic stage machine drives a fake canvas + plugin. Playwright (or
    autoplay) walks the stages and captures a screenshot after each.
    ========================================================================== */
@@ -526,7 +526,7 @@ function radio(on) {
     : `<svg class="tick" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7.25" stroke="currentColor" stroke-opacity="0.35" stroke-width="1.5"/></svg>`;
 }
 function head() {
-  return `<div class="pg-head"><span class="pg-mark">◈</span><span class="pg-title">Localization Pressure Test</span><span class="pg-x">✕</span></div>`;
+  return `<div class="pg-head"><span class="pg-mark">◈</span><span class="pg-title">Lipi</span><span class="pg-x">✕</span></div>`;
 }
 function setPlugin(bodyHTML) {
   pluginEl().innerHTML = head() + `<div class="pg-body"><div class="pg-anim">${bodyHTML}</div></div>`;
@@ -534,7 +534,7 @@ function setPlugin(bodyHTML) {
 
 function generateView(highlight) {
   setPlugin(`
-    <div class="pv-title">Localization Pressure Test</div>
+    <div class="pv-title">Lipi</div>
     <div class="pv-sub">Generate localized versions of your screens and discover layout issues before shipping.</div>
     <div class="pv-label">Choose Languages</div>
     <div class="opt on">${tick(true)} हिन्दी</div>
@@ -546,6 +546,64 @@ function generateView(highlight) {
     <div class="field-gap"></div>
     <button class="btn primary ${highlight ? "pulse" : ""}">Generate &amp; Test</button>
     <div class="pv-hint">Select your English frames first.</div>
+  `);
+}
+
+// First-run onboarding.
+function onboardingView() {
+  const step = (n, t, d) => `<div style="display:flex;gap:12px;margin-bottom:16px"><span style="width:22px;height:22px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);display:grid;place-items:center;font-size:11px;font-weight:700;flex:0 0 auto">${n}</span><span><div style="font-size:12.5px;font-weight:600">${t}</div><div style="font-size:11.5px;color:var(--muted);margin-top:1px;line-height:1.4">${d}</div></span></div>`;
+  setPlugin(`
+    <div class="pv-title">Welcome to Lipi</div>
+    <div class="pv-sub">Pressure-test your English UI against Indian languages — right inside Figma.</div>
+    <div style="height:6px"></div>
+    ${step(1, "Select your English frames", "Pick the screens you want to test on the canvas.")}
+    ${step(2, "Generate & Test", "Lipi clones and localizes them, then measures the layout.")}
+    ${step(3, "Fix the root causes", "Reveal issues on canvas and fix once across every screen.")}
+    <button class="btn primary block">Get started</button>
+  `);
+}
+// Generate view with the API-key provider selected (key required).
+function generateViewKey() {
+  setPlugin(`
+    <div class="pv-title">Lipi</div>
+    <div class="pv-sub">Generate localized versions of your screens and discover layout issues before shipping.</div>
+    <div class="pv-label">Choose Languages</div>
+    <div class="opt on">${tick(true)} हिन्दी</div>
+    <div class="opt">${tick(false)} தமிழ்</div>
+    <div class="field-gap"></div>
+    <div class="pv-label">Translation</div>
+    <div class="opt">${radio(false)} Demo Dictionary <span class="soon">no key</span></div>
+    <div class="opt on">${radio(true)} Google Translate <span class="soon">API key</span></div>
+    <input placeholder="Paste Google Translation API key" style="width:100%;font-size:12px;padding:10px 11px;border:1px solid var(--line-strong);border-radius:8px;background:#fff;color:inherit;margin-top:10px" />
+    <button class="btn primary block" style="margin-top:12px">Generate &amp; Test</button>
+  `);
+}
+// No frames selected — the empty/error state.
+function generateViewError() {
+  setPlugin(`
+    <div class="pv-title">Lipi</div>
+    <div class="pv-sub">Generate localized versions of your screens and discover layout issues before shipping.</div>
+    <div class="pv-label">Choose Languages</div>
+    <div class="opt on">${tick(true)} हिन्दी</div>
+    <div class="opt">${tick(false)} தமிழ்</div>
+    <div style="display:flex;gap:10px;background:var(--food-soft);border-radius:10px;padding:11px 12px;margin:14px 0">
+      <span style="width:22px;height:22px;border-radius:50%;background:var(--danger);color:#fff;display:grid;place-items:center;font-weight:700;font-size:12px;flex:0 0 auto">!</span>
+      <span><div style="font-size:12px;font-weight:600">No frames selected</div><div style="font-size:11px;color:var(--muted);margin-top:1px;line-height:1.4">Select your English frames on the canvas, then Generate &amp; Test.</div></span>
+    </div>
+    <button class="btn primary block" style="opacity:.5">Generate &amp; Test</button>
+  `);
+}
+// Analysis complete, but nothing to fix — the success/empty state.
+function noIssuesView() {
+  setPlugin(`
+    <div class="res-head"><div class="res-title">Analysis complete</div><div class="res-meta">हिन्दी · 6 screens</div>
+      <div class="res-actions"><span class="mini tonal">Re-check</span><span class="mini ghost">Export</span><span class="mini ghost">New</span></div></div>
+    <div style="text-align:center;padding:30px 8px 8px">
+      <div style="width:50px;height:50px;border-radius:50%;background:var(--ok-soft);color:var(--ok);display:grid;place-items:center;font-size:24px;margin:0 auto 14px">✓</div>
+      <div style="font-size:15px;font-weight:600">No issues found</div>
+      <div style="font-size:12px;color:var(--muted);margin:5px auto 0;line-height:1.5;max-width:236px">Every screen fits comfortably in हिन्दी. You’re ready to hand off.</div>
+      <button class="btn primary" style="width:auto;margin-top:18px;padding:10px 18px">Export Localized Screens</button>
+    </div>
   `);
 }
 
@@ -667,6 +725,8 @@ const STAGE_IDS = [
   "19-go-to-component-external", "20-recheck-on-canvas",
   // full parity: the remaining two detection types revealed on screen
   "21-reveal-line-clip", "22-reveal-missing-font",
+  // states: onboarding, API key, empty/error, no-issues success
+  "23-onboarding", "24-generate-key", "25-no-frames", "26-no-issues",
 ];
 
 // reset canvas decorations not owned by a stage (keeps single-stage jumps clean)
@@ -680,7 +740,7 @@ function resetCanvas() {
 // generate view with both languages ticked
 function generateViewBilingual(highlight) {
   setPlugin(`
-    <div class="pv-title">Localization Pressure Test</div>
+    <div class="pv-title">Lipi</div>
     <div class="pv-sub">Generate localized versions of your screens and discover layout issues before shipping.</div>
     <div class="pv-label">Choose Languages</div>
     <div class="opt on">${tick(true)} हिन्दी</div>
@@ -964,6 +1024,27 @@ async function goStage(id) {
       highlightAll("hi", "orders", ".otag.tofu", { color: "var(--t-font)", label: "Unsupported font", below: true });
       focusPhone("hi", 4, 1.0);
       await wait(1100); break;
+
+    // ── Plugin states (documentation) ───────────────────────────────────────
+    case "23-onboarding":
+      resetCanvas(); showHindi(false); showTamil(false); selectEnglish(false);
+      onboardingView(); OVERVIEW_EN();
+      await wait(600); break;
+
+    case "24-generate-key":
+      resetCanvas(); showHindi(false); showTamil(false); selectEnglish(true);
+      generateViewKey(); OVERVIEW_EN();
+      await wait(600); break;
+
+    case "25-no-frames":
+      resetCanvas(); showHindi(false); showTamil(false); selectEnglish(false);
+      generateViewError(); OVERVIEW_EN();
+      await wait(600); break;
+
+    case "26-no-issues":
+      resetCanvas(); showHindi(true); showTamil(false); clearBadges();
+      noIssuesView(); OVERVIEW_HI();
+      await wait(600); break;
   }
   window.DEMO.settled = true;
 }
@@ -1014,7 +1095,7 @@ async function film() {
   generateView(false);
   selectEnglish(true); // selection breathes gently (film-mode)
   cineFocus((frameX(4) + PHONE_W) / 2, 250, 0.5, 0); // establish, instant
-  caption("Localization Pressure Test", "Find layout issues before you ship.", true);
+  caption("Lipi", "Find layout issues before you ship.", true);
   await wait(900);
   cineFocus(frameX(1) + PHONE_W / 2, 250, 0.66, 2600, "cubic-bezier(.4,0,.2,1)"); // slow, confident push
   await wait(1900);
@@ -1105,6 +1186,8 @@ async function boot() {
     stages: STAGE_IDS,
     stage: (id) => goStage(id),
     film: () => film(),
+    cam: (cx, cy, s) => cineFocus(cx, cy, s, 0), // aggressive-crop hook for the poster set
+    geo: { COL, PHONE_W, EN_Y, HI_Y, frameX: (i) => frameX(i) },
     setCameraAnimation: (on) => (camAnim = on),
     async play() {
       camAnim = true;

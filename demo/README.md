@@ -67,13 +67,35 @@ and missing-font (22) — are revealed on the actual screens, not just listed.
   The MP4s (H.264) play everywhere (QuickTime, Preview, Keynote, PowerPoint) via
   the bundled `ffmpeg-static`; the WebMs are the raw recordings.
 
-**Launch stills** — `npm run stills` renders art-directed marketing images into
-`demo/stills/`, all sharing one accent system and a consistent caption card:
-`01-hero … 08-export` (one idea each), `cover.png` (beauty shot), `social.png`
-(1200×630 OG), `thumbnail.png` (16:9), `poster.png` (video poster). Design
-language: a **single accent** (`#3e63f0`) carries every tool signal — selection,
-measurements, issue markers, component relationships — while the demo app keeps
-its own red brand as *content*, and green means *resolved* only.
+### Two separate outputs
+
+The story and the documentation are **different deliverables** with different
+rendering configs:
+
+- **Video = tells the story** (captions ON). `npm run film` → `demo-film.mp4`
+  keeps all cinematic typography, hero statements, timing and the pressure
+  animation. `npm run video` → `demo-walkthrough.mp4` is the longer, comprehensive
+  autoplay (no marketing captions).
+- **Screenshots = document the product** (captions OFF). Clean UI-only, captured
+  as if straight from the real app — no headlines, lower-thirds or cinematic
+  overlays. `npm run screenshots` → **26** frames covering every function and
+  state (generate, API-key, empty/error, progress, preview, results, all four
+  reveal types, design system, go-to-component ± external, re-check, export,
+  bilingual, before/after, onboarding, no-issues). `npm run stills` → the clean
+  asset frames `cover.png`, `social.png` (1200×630 OG), `thumbnail.png` (16:9),
+  `poster.png`. Branding lives inside the product — the plugin panel reads **Lipi**.
+- **Posters** (`npm run posters`) are a separate cinematic exploration — dark
+  workspace, aggressive crop, keynote titles — kept intentionally typographic.
+
+Design language: a **single accent** (`#3e63f0`) carries every tool signal —
+selection, measurements, issue markers, component relationships — while the demo
+app keeps its own red brand as *content*, and green means *resolved* only.
+
+**Posters** (a parallel exploration) — `npm run posters` renders launch-poster
+compositions into `demo/posters/`: a **dark workspace**, aggressive crop, one
+dominant focal point, and negative space carrying a keynote title. The plugin is
+the product; Figma is only atmosphere. `01-the-break`, `02-the-pattern`,
+`03-the-product`, `04-measured` (2560×1600) + `05-cover-portrait` (2160×2700).
 
 Regenerate individually with `npm run screenshots`, `npm run gallery`, or `npm run video`.
 See everything together in a browser: `npm run serve` → <http://localhost:4599/gallery.html>
