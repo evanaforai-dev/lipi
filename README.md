@@ -1,12 +1,24 @@
-# Localization Pressure Test
+# Lipi
 
-A Figma plugin that **pressure-tests your UI against localized copy** — generate a
+**A Figma plugin that pressure-tests your UI against localized copy** — generate a
 Hindi or Tamil variant of the selected screens, see exactly where translated text
 breaks the layout, reveal each problem on the canvas, and export the localized copies.
+*(The plugin ships in Figma under its functional name, "Localization Pressure Test".)*
+
+<p align="center">
+  <img src="demo/posters/03-the-product.png" alt="Lipi — the product" width="80%">
+</p>
 
 > **Scope, stated honestly:** this is a *localization-pressure concept for Indic
 > languages* (Hindi + Tamil today). It's a design-and-engineering study, not a
 > production localization pipeline — see [Limitations](#limitations).
+
+<p align="center">
+  <img src="demo/screenshots/04-preview.png" alt="Preview" width="24%">
+  <img src="demo/screenshots/05-results.png" alt="Results" width="24%">
+  <img src="demo/screenshots/06-reveal.png" alt="Reveal on canvas" width="24%">
+  <img src="demo/screenshots/07-design-system.png" alt="Design System fixes" width="24%">
+</p>
 
 ## What it does
 
