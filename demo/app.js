@@ -25,7 +25,7 @@ const EN_Y = 0;
 const HI_Y = 620; // hindi row lives below the english row
 const TA_Y = 1240; // tamil row below hindi (bilingual runs)
 const ROW_Y = { en: EN_Y, hi: HI_Y, ta: TA_Y };
-const LANG_LABEL = { hi: "हिन्दी", ta: "தமிழ்" };
+const LANG_LABEL = { hi: "हिन्दी", ta: "தமிழ்", bn: "বাংলা", kn: "ಕನ್ನಡ" };
 // before/after comparison pair lives in its own clear area
 const BA_Y = 1900;
 // main component lives to the left of the artboards (Go to component target)
@@ -163,7 +163,7 @@ function checkoutFixedHTML(L) {
   return `<div class="body">
     <div class="scr-title">${T("Checkout", L)}</div>
     <div class="co-card"><div class="co-top"><small>${T("Delivery Address", L)}</small><span class="co-change">${T("Change", L)}</span></div>
-      <b>${T("Home", L)}</b><div class="co-sub">42, MG Road, Indiranagar, Bengaluru 560038</div></div>
+      <b>${T("Home", L)}</b><div class="co-sub">${T("42, MG Road, Indiranagar, Bengaluru 560038", L)}</div></div>
     <div class="co-card"><small>${T("Payment Method", L)}</small><b>•••• •••• •••• 4242</b></div>
     <div class="co-card co-sum"><small>${T("Order Summary", L)}</small>
       <div style="height:6px"></div>
@@ -607,6 +607,27 @@ function noIssuesView() {
   `);
 }
 
+// Preview a screen in a localized state on the canvas — reversible, non-destructive.
+function previewView() {
+  setPlugin(`
+    <div class="pv-title">Preview</div>
+    <div class="pv-sub">See a screen in a localized state on your canvas — your original frames stay untouched.</div>
+    <div class="pv-label">Screen</div>
+    <div class="opt" style="justify-content:space-between"><span>Checkout</span><span class="soon">1 / 6</span></div>
+    <div class="pv-label" style="margin-top:12px">Language</div>
+    <div class="opt on" style="font-family:var(--indic)">हिन्दी</div>
+    <div class="field-gap"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--line);padding-top:16px;margin-top:2px">
+      <span style="font-size:14px;font-weight:600">Preview localized</span>
+      <span class="pv-switch" style="position:relative;width:46px;height:26px;border-radius:999px;background:#d7dbe4;flex:0 0 auto">
+        <span class="pv-knob" style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3)"></span></span>
+    </div>
+    <div class="pv-status" style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:12.5px;font-weight:600;color:var(--muted)">
+      <span class="pv-dot" style="width:8px;height:8px;border-radius:50%;background:var(--ok)"></span><span class="pv-status-txt">Showing original · English</span></div>
+    <div style="font-size:11.5px;color:var(--faint);margin-top:8px;line-height:1.5">Preview only · toggle off to restore the original.</div>
+  `);
+}
+
 const PROG_STAGES = ["Preparing", "Translating", "Measuring", "Detecting", "Assembling"];
 function progressView(pct, activeIdx, opts = {}) {
   const rows = PROG_STAGES.map((s, i) => {
@@ -648,7 +669,7 @@ function resultsView(opts = {}) {
   // bilingual: a language tab strip; meta reflects both languages
   const langTabs = opts.langTabs;
   const activeLang = opts.activeLang || "hi";
-  const meta = langTabs ? "2 languages · 6 screens each" : `${LANG_LABEL[activeLang]} · 6 screens`;
+  const meta = langTabs ? `${langTabs.length} languages · 6 screens each` : `${LANG_LABEL[activeLang]} · 6 screens`;
   const tabsHTML = langTabs
     ? `<div class="lang-tabs">${langTabs
         .map((l) => `<button class="${l === activeLang ? "on" : ""}">${LANG_LABEL[l]}</button>`)
@@ -1187,7 +1208,22 @@ async function boot() {
     stage: (id) => goStage(id),
     film: () => film(),
     cam: (cx, cy, s) => cineFocus(cx, cy, s, 0), // aggressive-crop hook for the poster set
-    geo: { COL, PHONE_W, EN_Y, HI_Y, frameX: (i) => frameX(i) },
+    camTo: (cx, cy, s, ms = 900) => cineFocus(cx, cy, s, ms), // animated camera move for clips
+    showLocalized: (on) => showHindi(on), // toggle the localized row on the real canvas (preview ↔ original)
+    geo: { COL, PHONE_W, EN_Y, HI_Y, TA_Y, frameX: (i) => frameX(i) },
+    // Composition hooks for bespoke concept images: render any screen in any language,
+    // and reuse the analysis overlays on arbitrary composed phones.
+    render: (lang, screenId) => phoneHTML(DATA.screens.find((s) => s.id === screenId), lang),
+    renderFixed: (lang) => `<div class="phone"><div class="screen indic">${statusbar()}${checkoutFixedHTML(lang)}</div></div>`,
+    fx: { highlight, measureWidth, pressureBadge, recoChip, baselineOutline },
+    // Render a real plugin-panel view and return its inner markup (head + body),
+    // so concept compositions can feature the product UI as the actor.
+    plugin: (view, opts = {}) => {
+      const V = { results: resultsView, reveal: revealView, designSystem: designSystemView, generateBilingual: generateViewBilingual, preview: previewView, generate: generateView, generateKey: generateViewKey, generateError: generateViewError, noIssues: noIssuesView, onboarding: onboardingView };
+      (V[view] || resultsView)(opts);
+      return pluginEl().innerHTML;
+    },
+    data: { findings: FINDINGS, recheck: RECHECK, screens: DATA.screens },
     setCameraAnimation: (on) => (camAnim = on),
     async play() {
       camAnim = true;

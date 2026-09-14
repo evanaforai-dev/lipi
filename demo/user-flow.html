@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lipi — User Flow</title>
+    <style>
+      :root {
+        --bg: #0b0d12; --panel: #141824; --panel-2: #171c2a; --line: #232a3a; --line-2: #303950;
+        --ink: #eceef4; --muted: #98a1b4; --faint: #6a7385;
+        --acc: #8398ff; --acc-fill: #3e63f0; --acc-dim: #263056;
+        --edge: #e6a95c; --edge-dim: #3a2f1c; --ok: #43c98a; --ok-dim: #1c3a2b;
+        --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        --indic: "Noto Sans", "Kohinoor Devanagari", "Tamil Sangam MN", "Nirmala UI", var(--font);
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: var(--font); background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased;
+        background-image: radial-gradient(circle at 50% 0, rgba(62,99,240,0.08), transparent 60%); }
+      .page { width: 1560px; margin: 0 auto; padding: 60px 60px 80px; }
+
+      header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 44px; }
+      .brand { display: flex; align-items: center; gap: 12px; }
+      .brand .mk { width: 34px; height: 34px; border-radius: 9px; background: var(--acc-fill); display: grid; place-items: center; color: #fff; font-size: 18px; box-shadow: 0 8px 24px rgba(62,99,240,0.4); }
+      h1 { font-size: 30px; letter-spacing: -0.8px; font-weight: 600; }
+      .sub { color: var(--muted); font-size: 15px; margin-top: 4px; max-width: 640px; line-height: 1.5; }
+      .legend { display: flex; gap: 16px; flex-wrap: wrap; }
+      .lg { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--muted); }
+      .sw { width: 13px; height: 13px; border-radius: 4px; }
+      .sw.step { background: var(--panel); border: 1px solid var(--line-2); }
+      .sw.dec { background: transparent; border: 1.5px solid var(--acc); border-radius: 999px; }
+      .sw.edge { background: var(--edge-dim); border: 1.5px dashed var(--edge); }
+      .sw.ok { background: var(--ok-dim); border: 1px solid var(--ok); }
+      .sw.link { background: transparent; border: 1.5px dashed var(--acc); }
+
+      /* phase band */
+      .phase { border: 1px solid var(--line); border-radius: 18px; background: linear-gradient(180deg, rgba(20,24,36,0.7), rgba(16,19,28,0.7)); padding: 22px 26px 26px; }
+      .phase-head { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+      .pnum { font-variant-numeric: tabular-nums; color: var(--acc); font-weight: 700; font-size: 13px; letter-spacing: 1px; background: var(--acc-dim); border-radius: 7px; padding: 4px 9px; }
+      .pname { font-size: 16px; font-weight: 600; letter-spacing: -0.2px; }
+      .phint { color: var(--faint); font-size: 13px; margin-left: auto; }
+
+      /* nodes */
+      .row { display: flex; align-items: stretch; gap: 0; flex-wrap: wrap; }
+      .col { display: flex; flex-direction: column; gap: 12px; }
+      .node { background: var(--panel); border: 1px solid var(--line-2); border-radius: 12px; padding: 13px 15px; min-width: 190px; position: relative; }
+      .node .ntag { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--faint); margin-bottom: 5px; }
+      .node .ntitle { font-size: 14.5px; font-weight: 600; letter-spacing: -0.1px; }
+      .node .ndesc { font-size: 12.5px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+      .node .indic { font-family: var(--indic); }
+      .node.accent { border-color: var(--acc); box-shadow: 0 0 0 1px rgba(62,99,240,0.25), 0 10px 30px rgba(62,99,240,0.14); }
+      .node.accent .ntag { color: var(--acc); }
+      .node.decision { border: 1.5px solid var(--acc); border-radius: 999px; background: var(--acc-dim); text-align: center; min-width: 150px; display: flex; flex-direction: column; justify-content: center; }
+      .node.decision .ntag { color: var(--acc); margin-bottom: 2px; }
+      .node.edge { border: 1.5px dashed var(--edge); background: var(--edge-dim); }
+      .node.edge .ntag { color: var(--edge); }
+      .node.ok { border: 1.5px solid var(--ok); background: var(--ok-dim); }
+      .node.ok .ntag { color: var(--ok); }
+
+      .ar { display: flex; align-items: center; color: var(--faint); font-size: 20px; padding: 0 12px; }
+      .ar .lbl { font-size: 11px; color: var(--acc); font-weight: 600; margin: 0 6px; }
+
+      /* vertical connector between phases */
+      .spine { display: flex; flex-direction: column; align-items: center; height: 34px; }
+      .spine .ln { width: 2px; flex: 1; background: linear-gradient(var(--line-2), var(--acc)); }
+      .spine .cv { color: var(--acc); font-size: 15px; line-height: 0.6; margin-top: -2px; }
+
+      .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+      .chip { font-size: 12px; color: var(--muted); border: 1px solid var(--line-2); border-radius: 999px; padding: 5px 11px; background: rgba(255,255,255,0.02); }
+      .chip.acc { color: var(--acc); border-color: var(--acc); }
+      .chip.k { display: inline-flex; gap: 6px; align-items: center; }
+
+      /* two lenses */
+      .lenses { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+      .lens { border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; background: var(--panel-2); }
+      .lens .lh { font-size: 14px; font-weight: 700; letter-spacing: 0.3px; display: flex; align-items: center; gap: 8px; }
+      .lens .lh .tag { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--acc); background: var(--acc-dim); border-radius: 6px; padding: 3px 7px; }
+      .lens .lsub { color: var(--faint); font-size: 12px; margin: 2px 0 14px; }
+      .stack { display: flex; flex-direction: column; gap: 10px; position: relative; }
+      .stack .node { min-width: 0; }
+      .vln { position: absolute; left: 20px; top: 6px; bottom: 6px; width: 2px; background: var(--line-2); z-index: -1; }
+
+      .crosslinks { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 16px 0; }
+      .xl { display: inline-flex; align-items: center; gap: 8px; border: 1.5px dashed var(--acc); border-radius: 999px; padding: 7px 14px; font-size: 12.5px; color: var(--acc); font-weight: 600; background: rgba(62,99,240,0.06); }
+
+      .loop { display: inline-flex; align-items: center; gap: 8px; border: 1.5px dashed var(--line-2); border-radius: 999px; padding: 6px 13px; font-size: 12px; color: var(--muted); }
+      .loop b { color: var(--acc); }
+      .note { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; background: rgba(62,99,240,0.05); color: var(--muted); font-size: 13px; margin-top: 22px; }
+      .note b { color: var(--ink); font-weight: 500; }
+      .brk { flex-basis: 100%; height: 0; }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div>
+          <div class="brand"><span class="mk">◈</span><div><h1>Lipi — Complete user flow</h1></div></div>
+          <div class="sub">Every path a designer can take: one or two Indian languages, live preview, screen-level triage vs. design-system root causes, fix &amp; re-check, export — and the edge cases.</div>
+        </div>
+        <div class="legend">
+          <span class="lg"><span class="sw step"></span>Step</span>
+          <span class="lg"><span class="sw dec"></span>Decision</span>
+          <span class="lg"><span class="sw edge"></span>Edge case</span>
+          <span class="lg"><span class="sw ok"></span>Success / done</span>
+          <span class="lg"><span class="sw link"></span>Cross-link / loop</span>
+        </div>
+      </header>
+
+      <!-- 01 ENTER -->
+      <section class="phase">
+        <div class="phase-head"><span class="pnum">01</span><span class="pname">Enter</span></div>
+        <div class="row" style="align-items:center">
+          <div class="node accent"><div class="ntag">Start</div><div class="ntitle">◈ Open Lipi in Figma</div></div>
+          <span class="ar">→</span>
+          <div class="node decision"><div class="ntag">Decision</div><div class="ntitle">First run?</div></div>
+          <span class="ar"><span class="lbl">yes</span>→</span>
+          <div class="node"><div class="ntag">One-time</div><div class="ntitle">Onboarding · 3 steps</div><div class="ndesc">What Lipi does, in three cards</div></div>
+          <span class="ar"><span class="lbl">no ↴</span></span>
+          <div class="node"><div class="ntag">Home</div><div class="ntitle">Generate view</div></div>
+        </div>
+      </section>
+      <div class="spine"><div class="ln"></div><div class="cv">▼</div></div>
+
+      <!-- 02 SET UP -->
+      <section class="phase">
+        <div class="phase-head"><span class="pnum">02</span><span class="pname">Set up the test</span><span class="phint">multi-select languages · pick a translation source</span></div>
+        <div class="row" style="align-items:center;gap:0">
+          <div class="col">
+            <div class="node"><div class="ntag">Step 1</div><div class="ntitle">Select English frames</div><div class="ndesc">Pick the screens on the canvas</div></div>
+            <div class="node edge"><div class="ntag">Edge case</div><div class="ntitle">No frames selected</div><div class="ndesc">Guarded — prompt to select first</div></div>
+          </div>
+          <span class="ar">→</span>
+          <div class="node"><div class="ntag">Step 2</div><div class="ntitle indic">Choose languages — ☑ हिन्दी · ☐ தமிழ்</div><div class="ndesc">Multi-select: one, the other, or both</div></div>
+          <span class="ar">→</span>
+          <div class="col">
+            <div class="node"><div class="ntag">Step 3</div><div class="ntitle">Choose translation</div><div class="ndesc">◉ Demo Dictionary · ○ Google Translate</div></div>
+            <div class="node edge"><div class="ntag">Edge case</div><div class="ntitle">Google Translate → API key</div><div class="ndesc">Key required before generating</div></div>
+          </div>
+          <span class="ar">→</span>
+          <div class="node accent"><div class="ntag">Action</div><div class="ntitle">Generate &amp; Test</div></div>
+        </div>
+      </section>
+      <div class="spine"><div class="ln"></div><div class="cv">▼</div></div>
+
+      <!-- 03 DELTA ENGINE -->
+      <section class="phase">
+        <div class="phase-head"><span class="pnum">03</span><span class="pname">Delta Engine · the pipeline</span><span class="phint">runs per selected language</span></div>
+        <div class="row" style="align-items:center">
+          <div class="node"><div class="ntag">1</div><div class="ntitle">Clone frames</div></div><span class="ar">→</span>
+          <div class="node"><div class="ntag">2</div><div class="ntitle">Translate</div><div class="ndesc">per language</div></div><span class="ar">→</span>
+          <div class="node"><div class="ntag">3</div><div class="ntitle">Measure geometry</div><div class="ndesc">baseline vs. localized</div></div><span class="ar">→</span>
+          <div class="node"><div class="ntag">4</div><div class="ntitle">Detect pressure</div></div><span class="ar">→</span>
+          <div class="node"><div class="ntag">5</div><div class="ntitle">Assemble report</div></div>
+        </div>
+        <div class="chips">
+          <span class="chip">Detects:</span>
+          <span class="chip acc">Text overflow</span><span class="chip acc">Text too small</span>
+          <span class="chip acc">Clipped lines</span><span class="chip acc">Unsupported font</span>
+        </div>
+      </section>
+      <div class="spine"><div class="ln"></div><div class="cv">▼</div></div>
+
+      <!-- 04 PREVIEW -->
+      <section class="phase">
+        <div class="phase-head"><span class="pnum">04</span><span class="pname">Preview · on by default</span></div>
+        <div class="row" style="align-items:center">
+          <div class="node accent"><div class="ntag">Canvas</div><div class="ntitle">Localized copies appear beside originals</div><div class="ndesc">Bilingual → a Hindi row and a Tamil row</div></div>
+          <span class="ar">↔</span>
+          <div class="node"><div class="ntag">Toggle · anytime</div><div class="ntitle">Exit Preview ⇄ Preview again</div><div class="ndesc">Reversible clone-swap</div></div>
+        </div>
+      </section>
+      <div class="spine"><div class="ln"></div><div class="cv">▼</div></div>
+
+      <!-- 05 RESULTS -->
+      <section class="phase">
+        <div class="phase-head"><span class="pnum">05</span><span class="pname">Results</span><span class="phint">bilingual → a report per language</span></div>
+        <div class="row" style="align-items:center">
+          <div class="node accent"><div class="ntag">Report</div><div class="ntitle">Analysis complete</div><div class="ndesc">N findings across the screens</div></div>
+          <span class="ar">→</span>
+          <div class="node"><div class="ntag">Bilingual</div><div class="ntitle indic">Language tabs — हिन्दी | தமிழ்</div><div class="ndesc">Switch language · each its own report, preview &amp; export</div></div>
+          <span class="ar">→</span>
+          <div class="node decision"><div class="ntag">Decision</div><div class="ntitle">Any issues?</div></div>
+          <span class="ar"><span class="lbl">no</span>→</span>
+          <div class="node ok"><div class="ntag">Done</div><div class="ntitle">No issues found ✓</div><div class="ndesc">Ready to hand off → Export</div></div>
+        </div>
+        <div class="chips"><span class="chip">If <b style="color:var(--acc)">&nbsp;yes&nbsp;</b> → choose a lens ▼</span></div>
+      </section>
+      <div class="spine"><div class="ln"></div><div class="cv">▼</div></div>
+
+      <!-- 06 TWO LENSES -->
+      <section class="phase">
+        <div class="phase-head"><span class="pnum">06</span><span class="pname">Two lenses over the same findings</span><span class="phint">linked both ways</span></div>
+        <div class="lenses">
+          <div class="lens">
+            <div class="lh"><span class="tag">Screen level</span> Fix now</div>
+            <div class="lsub">Triage — what's wrong and where, screen by screen.</div>
+            <div class="stack"><div class="vln"></div>
+              <div class="node"><div class="ntitle">Findings grouped by type, per screen</div></div>
+              <div class="node"><div class="ntitle">Reveal on canvas</div><div class="ndesc">Single layer or a whole group · camera flies in, highlight + measurement</div></div>
+              <div class="node"><div class="ntitle">Preview screen</div><div class="ndesc">Zoom to it on the canvas</div></div>
+            </div>
+          </div>
+          <div class="lens">
+            <div class="lh"><span class="tag">Design-system level</span> Fix once</div>
+            <div class="lsub">One component → the screens it breaks everywhere.</div>
+            <div class="stack"><div class="vln"></div>
+              <div class="node"><div class="ntitle">Root causes — “one component, N screens”</div></div>
+              <div class="node"><div class="ntitle">Why? · Reveal all on canvas</div><div class="ndesc">Rationale + illuminate every affected layer</div></div>
+              <div class="node"><div class="ntitle">Go to component</div><div class="ndesc">Success → selects the main component</div></div>
+              <div class="node edge"><div class="ntag">Edge case</div><div class="ntitle">External-library component</div><div class="ndesc">Can't jump → red feedback on that card</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="crosslinks">
+          <span class="xl">Screen → “See the fix →” → Design-system root cause</span>
+          <span class="xl">Design-system → “Appears in N screens →” → open that screen</span>
+        </div>
+      </section>
+      <div class="spine"><div class="ln"></div><div class="cv">▼</div></div>
+
+      <!-- 07 FIX & RE-CHECK -->
+      <section class="phase">
+        <div class="phase-head"><span class="pnum">07</span><span class="pname">Fix &amp; re-check</span></div>
+        <div class="row" style="align-items:center">
+          <div class="node accent"><div class="ntag">In Figma</div><div class="ntitle">Fix once — the component</div></div><span class="ar">→</span>
+          <div class="node"><div class="ntag">Verify</div><div class="ntitle">Re-check</div></div><span class="ar">→</span>
+          <div class="node"><div class="ntitle">Diff · fixed vs. remaining</div></div><span class="ar">→</span>
+          <div class="node"><div class="ntitle">Count drops · 11 → 4</div><div class="ndesc">animated</div></div><span class="ar">→</span>
+          <div class="node"><div class="ntitle">On canvas</div><div class="ndesc">green ✓ resolved · red still flagged</div></div>
+        </div>
+        <div class="chips" style="margin-top:16px"><span class="loop">↺ Repeat until clear <b>→ back to Results</b></span></div>
+      </section>
+      <div class="spine"><div class="ln"></div><div class="cv">▼</div></div>
+
+      <!-- 08 EXPORT -->
+      <section class="phase">
+        <div class="phase-head"><span class="pnum">08</span><span class="pname">Export &amp; finish</span></div>
+        <div class="row" style="align-items:center">
+          <div class="node accent"><div class="ntag">Action</div><div class="ntitle">Export localized screens</div><div class="ndesc">Active language · placed as a section beside the originals</div></div>
+          <span class="ar">→</span>
+          <div class="node"><div class="ntag">Bilingual</div><div class="ntitle indic">Two sections — हिन्दी + தமிழ்</div><div class="ndesc">One row per language, 12 screens</div></div>
+          <span class="ar">→</span>
+          <div class="node ok"><div class="ntag">Done</div><div class="ntitle">Export complete ✓</div><div class="ndesc">Ready for handoff</div></div>
+          <span class="ar">→</span>
+          <div class="node"><div class="ntitle">New Analysis</div><div class="ndesc">Reset</div></div>
+        </div>
+        <div class="chips" style="margin-top:16px"><span class="loop">↺ New Analysis <b>→ back to “Set up the test”</b></span></div>
+      </section>
+
+      <div class="note"><span style="color:var(--acc);font-weight:700">↔</span> <span><b>Threaded throughout:</b> Preview can be toggled at any point after generation; in bilingual runs the language tab switches the report, the on-canvas preview, and what Export produces. The two lenses always read the same findings — never separate data.</span></div>
+    </div>
+  </body>
+</html>

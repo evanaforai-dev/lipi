@@ -245,9 +245,9 @@
       "Log Out": "வெளியேறு"
     },
     "te": { "Total": "మొత్తం", "Add": "జోడించు", "Place Order": "ఆర్డర్ చేయండి", "Your Cart": "మీ కార్ట్", "Checkout": "చెక్అవుట్", "Home": "హోమ్" },
-    "kn": { "Total": "ಒಟ್ಟು", "Add": "ಸೇರಿಸು", "Place Order": "ಆರ್ಡರ್ ಮಾಡಿ", "Your Cart": "ನಿಮ್ಮ ಕಾರ್ಟ್", "Checkout": "ಚೆಕ್‌ಔಟ್", "Home": "ಮುಖಪುಟ" },
+    "kn": { "Total": "ಒಟ್ಟು", "Add": "ಸೇರಿಸು", "Place Order": "ನಿಮ್ಮ ಆರ್ಡರ್ ಖಚಿತಪಡಿಸಿ", "Your Cart": "ನಿಮ್ಮ ಕಾರ್ಟ್", "Checkout": "ಚೆಕ್‌ಔಟ್", "Home": "ಮನೆ", "Delivery Address": "ವಿತರಣಾ ವಿಳಾಸ", "Change": "ಬದಲಾಯಿಸಿ", "Payment Method": "ಪಾವತಿ ವಿಧಾನ", "Order Summary": "ಆರ್ಡರ್ ಸಾರಾಂಶ", "Subtotal": "ಉಪಮೊತ್ತ", "42, MG Road, Indiranagar, Bengaluru 560038": "೪೨, ಎಂಜಿ ರಸ್ತೆ, ಇಂದಿರಾನಗರ, ಬೆಂಗಳೂರು ೫೬೦೦೩೮" },
     "ml": { "Total": "ആകെ", "Add": "ചേർക്കുക", "Place Order": "ഓർഡർ ചെയ്യുക", "Your Cart": "നിങ്ങളുടെ കാർട്ട്", "Checkout": "ചെക്ക്ഔട്ട്", "Home": "ഹോം" },
-    "bn": { "Total": "মোট", "Add": "যোগ করুন", "Place Order": "অর্ডার করুন", "Your Cart": "আপনার কার্ট", "Checkout": "চেকআউট", "Home": "হোম" },
+    "bn": { "Total": "মোট", "Add": "যোগ করুন", "Place Order": "আপনার অর্ডার নিশ্চিত করুন", "Your Cart": "আপনার কার্ট", "Checkout": "চেকআউট", "Home": "বাড়ি", "Delivery Address": "ডেলিভারি ঠিকানা", "Change": "পরিবর্তন", "Payment Method": "পেমেন্ট পদ্ধতি", "Order Summary": "অর্ডার সারসংক্ষেপ", "Subtotal": "সাবটোটাল", "42, MG Road, Indiranagar, Bengaluru 560038": "৪২, এমজি রোড, ইন্দিরানগর, বেঙ্গালুরু ৫৬০০৩৮" },
     "gu": { "Total": "કુલ", "Add": "ઉમેરો", "Place Order": "ઓર્ડર કરો", "Your Cart": "તમારી કાર્ટ", "Checkout": "ચેકઆઉટ", "Home": "હોમ" },
     "mr": { "Total": "एकूण", "Add": "जोडा", "Place Order": "ऑर्डर करा", "Your Cart": "तुमची कार्ट", "Checkout": "चेकआउट", "Home": "मुख्यपृष्ठ" }
   }
