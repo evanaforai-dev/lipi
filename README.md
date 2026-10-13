@@ -3,7 +3,6 @@
 **A Figma plugin that pressure-tests your UI against localized copy** — generate a
 Hindi or Tamil variant of the selected screens, see exactly where translated text
 breaks the layout, reveal each problem on the canvas, and export the localized copies.
-*(The plugin ships in Figma under its functional name, "Localization Pressure Test".)*
 
 <p align="center">
   <img src="demo/posters/03-the-product.png" alt="Lipi — the product" width="80%">
@@ -55,8 +54,12 @@ systemic fix can show where it occurs.
 - **Analysis is a stable seam**: any detector produces `Issue[]`; `assembleReport`
   decorates + aggregates into a `Report`; the UI is a pure presentation layer over
   that report. Regression scripts in `scripts/` cover the engine.
-- **Translation providers**: a built-in, offline **Demo** provider and a
-  **Google Translate** provider (real translations, requires an API key).
+- **Translation providers**: **Free** (default; real machine translation through
+  MyMemory's public API, no key, about 5,000 characters a day, placeholder fallback past
+  that), **Offline** (curated dictionary plus script-correct placeholder text, no network)
+  and **Google Translate** (requires your own API key).
+- **Dynamic page loading**: the manifest sets `documentAccess: "dynamic-page"`, which
+  Figma requires for new plugins, so every node lookup is async.
   - The **Demo** provider ships a **curated bilingual dictionary** — 73 real
     Hindi and 73 real Tamil translations (keys matched across both languages),
     covering navigation, auth, actions/CTAs, content, commerce, and a
@@ -82,9 +85,8 @@ In Figma desktop: **Plugins → Development → Import plugin from manifest…**
 - **Languages:** Hindi + Tamil only. The big text-expansion cases (German/French)
   and RTL (Arabic/Hebrew) aren't covered yet.
 - **Translation source:** it translates the English text on the canvas, not a real
-  i18n string catalog. Demo mode uses a curated real-translation dictionary (see
-  above) with pseudo-text as a fallback for uncovered strings; full, arbitrary
-  translation needs a Google Translate key. Tamil entries should get a
+  i18n string catalog. Free mode is machine translation with a daily quota; Offline
+  mode uses a curated dictionary with pseudo-text for uncovered strings. Tamil entries should get a
   native-speaker review before public use.
 - **Detection is heuristic** (size thresholds, clone-and-reflow geometry) and hasn't
   been hardened against every real-world file.

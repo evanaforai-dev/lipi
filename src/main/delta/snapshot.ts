@@ -100,7 +100,9 @@ export function captureLayout(frames: readonly SceneNode[]): Capture {
     });
 
     if (screen.frameId && !frameSnaps.has(screen.frameId)) {
-      const frameNode = figma.getNodeById(screen.frameId);
+      // The screen frame is an ancestor of this text node; walk up rather than look it up.
+      let frameNode: BaseNode | null = node.parent;
+      while (frameNode && frameNode.id !== screen.frameId) frameNode = frameNode.parent;
       if (frameNode && "width" in frameNode && "height" in frameNode) {
         frameSnaps.set(screen.frameId, {
           frameId: screen.frameId,

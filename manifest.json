@@ -1,11 +1,18 @@
 {
-  "name": "Localization Pressure Test",
+  "name": "Lipi",
   "id": "localization-pressure-test",
   "api": "1.0.0",
-  "editorType": ["figma"],
+  "editorType": [
+    "figma"
+  ],
+  "documentAccess": "dynamic-page",
   "main": "dist/code.js",
   "ui": "dist/index.html",
   "networkAccess": {
-    "allowedDomains": ["https://translation.googleapis.com"]
+    "allowedDomains": [
+      "https://api.mymemory.translated.net",
+      "https://translation.googleapis.com"
+    ],
+    "reasoning": "Free mode translates layer text with MyMemory's public API. Google mode is optional and uses the designer's own key."
   }
 }

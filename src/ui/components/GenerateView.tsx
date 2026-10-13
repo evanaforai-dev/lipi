@@ -32,11 +32,12 @@ export function GenerateView({
   onGenerate: () => void;
 }) {
   const [keyDraft, setKeyDraft] = useState("");
-  const blocked = (keyRequired && !hasKey) || selectedLangs.length === 0;
+  const needsKey = keyRequired && !hasKey;
+  const blocked = needsKey || selectedLangs.length === 0;
 
   return (
     <div style={styles.root}>
-      <h1 style={styles.title}>Localization Pressure Test</h1>
+      <h1 style={styles.title}>Lipi</h1>
       <p style={styles.subtitle}>Generate localized versions of your screens and see what to fix.</p>
 
       <p style={styles.label}>Choose languages</p>
@@ -68,13 +69,20 @@ export function GenerateView({
             >
               <RadioIcon selected={selected} size={16} />
               {p.label}
-              <span style={styles.soon}>{p.requiresKey ? "API key" : "no key"}</span>
+              <span style={styles.soon}>{PROVIDER_NOTE[p.id]}</span>
             </div>
           );
         })}
       </div>
 
-      {blocked ? (
+      {providerId === "free" && (
+        <p style={{ ...styles.hint, margin: "-12px 0 16px" }}>
+          Real machine translation, about 5,000 characters a day. Past that, Lipi uses placeholder
+          text in the right script so the test still runs.
+        </p>
+      )}
+
+      {needsKey ? (
         <div style={styles.keyBlock}>
           <p style={styles.hint}>Add a Google Translation key to enable generation.</p>
           <input
@@ -113,9 +121,23 @@ export function GenerateView({
         Generate &amp; Test
       </button>
       <p style={styles.foot}>Select your English frames on the canvas first.</p>
+      <p style={styles.foot}>
+        <a style={styles.link} href={FEEDBACK_URL} target="_blank" rel="noreferrer">
+          Send feedback
+        </a>
+      </p>
     </div>
   );
 }
+
+const PROVIDER_NOTE: Record<ProviderId, string> = {
+  free: "no key",
+  demo: "offline",
+  google: "API key",
+};
+
+const FEEDBACK_URL =
+  "mailto:evana.s.pallivathukkal@gmail.com?subject=Lipi%20feedback";
 
 const styles: Record<string, React.CSSProperties> = {
   root: { display: "flex", flexDirection: "column", padding: "20px 16px", gap: 4 },
@@ -171,5 +193,6 @@ const styles: Record<string, React.CSSProperties> = {
   errorBody: { display: "flex", flexDirection: "column", gap: 2, minWidth: 0 },
   errorTitle: { fontSize: 12, fontWeight: 600 },
   errorMsg: { fontSize: 11, opacity: 0.75, lineHeight: 1.4 },
+  link: { color: "var(--figma-color-text-brand, #0d99ff)", textDecoration: "none" },
   foot: { fontSize: 11, opacity: 0.55, margin: "8px 0 0", textAlign: "center" },
 };

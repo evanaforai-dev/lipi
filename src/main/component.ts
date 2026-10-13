@@ -11,25 +11,25 @@ export interface ComponentInfo {
  * Count how many instances of each main component exist on the current page.
  * Built once per scan and shared across nodes so we don't re-traverse per issue.
  */
-export function buildInstanceCountMap(): Map<string, number> {
+export async function buildInstanceCountMap(): Promise<Map<string, number>> {
   const counts = new Map<string, number>();
   const instances = figma.currentPage.findAllWithCriteria({ types: ["INSTANCE"] });
   for (const inst of instances) {
-    const main = inst.mainComponent;
+    const main = await inst.getMainComponentAsync();
     if (main) counts.set(main.id, (counts.get(main.id) ?? 0) + 1);
   }
   return counts;
 }
 
 /** Walk up from a node to its nearest enclosing instance's main component. */
-export function getComponentInfo(
+export async function getComponentInfo(
   node: BaseNode,
   counts: Map<string, number>,
-): ComponentInfo | null {
+): Promise<ComponentInfo | null> {
   let current: BaseNode | null = node;
   while (current) {
     if (current.type === "INSTANCE") {
-      const main = current.mainComponent;
+      const main = await current.getMainComponentAsync();
       if (!main) return null; // e.g. unresolved remote/library component
       return {
         componentId: main.id,

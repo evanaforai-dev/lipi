@@ -9,8 +9,8 @@ import { CHECK_COLOR } from "../shared/constants";
 
 const GROUP_NAME = "🔍 Reveal Mode — temporary, safe to delete";
 
-// The temporary group's id. Module-level so it survives across messages.
-let revealGroupId: string | null = null;
+// The temporary group. Module-level so it survives across messages.
+let revealGroup: GroupNode | null = null;
 
 function pageOf(node: BaseNode): PageNode | null {
   let current: BaseNode | null = node;
@@ -29,10 +29,9 @@ function hexToRgb(hex: string): RGB {
 
 /** Remove the current overlay group, if any. Safe to call when nothing is shown. */
 export function clearReveal(): void {
-  if (!revealGroupId) return;
-  const group = figma.getNodeById(revealGroupId);
-  if (group && !group.removed) group.remove();
-  revealGroupId = null;
+  if (!revealGroup) return;
+  if (!revealGroup.removed) revealGroup.remove();
+  revealGroup = null;
 }
 
 // Briefly flash the overlays to draw the eye (preview mode only). No-op if the sandbox
@@ -58,16 +57,16 @@ function pulseOverlays(rects: RectangleNode[], color: RGB): void {
  * Returns the number of layers actually highlighted. When `pulse` is true (preview mode)
  * the overlays flash briefly to draw attention.
  */
-export function reveal(checkId: CheckId, nodeIds: string[], pulse = false): number {
+export async function reveal(checkId: CheckId, nodeIds: string[], pulse = false): Promise<number> {
   clearReveal();
+  const nodes = await Promise.all(nodeIds.map((id) => figma.getNodeByIdAsync(id)));
 
   // Overlays are page-scoped: switch to the page that owns these nodes so the rectangles
   // land on the right page with matching coordinates.
-  for (const id of nodeIds) {
-    const n = figma.getNodeById(id);
+  for (const n of nodes) {
     if (n && !n.removed) {
       const page = pageOf(n);
-      if (page && page !== figma.currentPage) figma.currentPage = page;
+      if (page && page !== figma.currentPage) await figma.setCurrentPageAsync(page);
       break;
     }
   }
@@ -75,8 +74,7 @@ export function reveal(checkId: CheckId, nodeIds: string[], pulse = false): numb
   const color = hexToRgb(CHECK_COLOR[checkId]);
   const overlays: SceneNode[] = [];
 
-  for (const id of nodeIds) {
-    const node = figma.getNodeById(id);
+  for (const node of nodes) {
     if (!node || node.removed || !("absoluteBoundingBox" in node)) continue;
     const box = node.absoluteBoundingBox;
     if (!box) continue;
@@ -100,7 +98,7 @@ export function reveal(checkId: CheckId, nodeIds: string[], pulse = false): numb
   group.name = GROUP_NAME;
   group.locked = true;
   group.expanded = false;
-  revealGroupId = group.id;
+  revealGroup = group;
 
   figma.viewport.scrollAndZoomIntoView(overlays);
   if (pulse) {

@@ -75,6 +75,7 @@ async function ensureScreenClone(originalNode: SceneNode): Promise<ScreenClone> 
   screen.visible = false;
   screen.setPluginData(HIDDEN_TAG, "true");
   hidden.push(screen);
+  rememberPreviewPage(figma.currentPage.id);
 
   // Structure is identical after clone+translate, so descendants align by traversal order.
   const nodeMap = new Map<string, string>();
@@ -93,7 +94,7 @@ async function ensureScreenClone(originalNode: SceneNode): Promise<ScreenClone> 
 
 /** Ensure the clone for the node's screen exists; return the corresponding clone node id. */
 export async function previewNode(originalNodeId: string): Promise<string | null> {
-  const node = figma.getNodeById(originalNodeId);
+  const node = await figma.getNodeByIdAsync(originalNodeId);
   if (!node || node.removed || node.type === "PAGE" || node.type === "DOCUMENT") return null;
   const entry = await ensureScreenClone(node as SceneNode);
   return entry.nodeMap.get(originalNodeId) ?? null;
@@ -132,9 +133,25 @@ export function exitPreview(): void {
   savedSelection = [];
 }
 
+// With dynamic page loading, other pages are not loaded until asked for, so the startup
+// sweep only visits pages a preview actually touched. Their ids live on the document root.
+const PREVIEW_PAGES_KEY = "lpt-preview-pages";
+
+function rememberPreviewPage(pageId: string): void {
+  const ids = new Set(figma.root.getPluginData(PREVIEW_PAGES_KEY).split(",").filter(Boolean));
+  if (ids.has(pageId)) return;
+  ids.add(pageId);
+  figma.root.setPluginData(PREVIEW_PAGES_KEY, [...ids].join(","));
+}
+
 /** Startup / close recovery: delete any leftover preview group and unhide tagged originals. */
-export function cleanupPreviewArtifacts(): void {
-  for (const page of figma.root.children) {
+export async function cleanupPreviewArtifacts(): Promise<void> {
+  const ids = new Set(figma.root.getPluginData(PREVIEW_PAGES_KEY).split(",").filter(Boolean));
+  ids.add(figma.currentPage.id);
+  for (const id of ids) {
+    const page = await figma.getNodeByIdAsync(id);
+    if (!page || page.type !== "PAGE") continue;
+    await page.loadAsync();
     for (const child of [...page.children]) {
       if (child.getPluginData(PREVIEW_TAG) === "true") {
         if (!child.removed) child.remove();
@@ -144,6 +161,7 @@ export function cleanupPreviewArtifacts(): void {
       }
     }
   }
+  figma.root.setPluginData(PREVIEW_PAGES_KEY, "");
   active = false;
   group = null;
   screens.clear();

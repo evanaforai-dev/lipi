@@ -1,6 +1,6 @@
 # Publishing pack
 
-Everything needed to list **Localization Pressure Test** on the Figma Community as a
+Everything needed to list **Lipi** on the Figma Community as a
 portfolio piece. Copy is written to be honest about scope (an Indic-language concept),
 which reads better than overclaiming.
 
@@ -46,47 +46,44 @@ Capture the Figma window (⌘⇧4 then Space) at these states → `docs/screensh
 
 ## 3. Community listing copy
 
-**Name:** Localization Pressure Test
+**Name:** Lipi
 
 **Tagline (one line):**
-See where translated copy breaks your layout — before handoff.
+Pressure-test your UI in Hindi and Tamil before you ship.
 
 **Description:**
-> Localization Pressure Test generates a Hindi or Tamil variant of your selected
-> screens and shows exactly where the translated copy breaks the layout — text
-> overflow, text that's too small to read, clipped lines, unsupported fonts.
+> Translated copy changes the geometry of a screen. Lipi shows you where, and which
+> component is behind it.
 >
-> • **Preview** localized screens in place, on your own canvas — fully reversible.
-> • **Reveal** each problem directly on the layer.
-> • **Fix recurring issues at the source** — problems are grouped into one
->   recommendation with a jump to the component.
-> • **Export** the localized copies into a titled section when you're ready.
+> Select your English frames, pick Hindi or Tamil, and press Generate & Test. Lipi
+> translates the copy for free (no key, no account), re-measures every layer, and flags
+> text overflow, text too small to read, clipped lines and unsupported fonts.
 >
-> A concept focused on Indic languages (Hindi + Tamil). Demo mode works offline;
-> real translations use a Google Translate API key.
+> • **Preview** localized screens in place on your own canvas. Fully reversible.
+> • **Reveal** each problem on the exact layer.
+> • **Fix once.** Repeated failures roll up to the component causing them, so one fix
+>   clears every screen it appears on. Re-check confirms it.
+> • **Export** localized copies into their own section when you are ready.
+>
+> Free translation covers about 5,000 characters a day. Past that, Lipi uses placeholder
+> text in the right script so the test still runs. Offline mode sends nothing anywhere.
+> Tamil is in beta. Feedback is welcome from the link in the plugin.
 
-**Tags:** `localization`, `i18n`, `hindi`, `tamil`, `qa`, `handoff`, `layout`,
-`accessibility-adjacent` (pick ~6 Figma allows).
+**Tags:** `localization`, `i18n`, `hindi`, `tamil`, `india`, `qa`, `handoff`.
 
-**Category:** Design tools / QA.
+**Category:** Design tools.
 
-## 4. Privacy note (required — the plugin makes network calls)
+## 4. Privacy
 
-> Localization Pressure Test runs entirely on your machine. In **Demo mode** no data
-> leaves Figma. If you choose the **Google Translate** provider, the plain text of the
-> layers you analyze is sent to Google's Translation API to be translated, using the
-> API key you provide; the key is stored locally via Figma's `clientStorage` and is
-> never transmitted anywhere else. No analytics, no tracking, no other network calls.
-> (Declared domain: `translation.googleapis.com`.)
+Paste the public URL of [`PRIVACY.md`](PRIVACY.md) into the listing's privacy field.
 
-Host this note somewhere linkable (GitHub, a gist, a Notion page) and paste the URL
-into the Community listing's privacy field.
+## 5. Assets
 
-## 5. Assets still needed
+All ready in `docs/store/`:
 
-- **Plugin icon** — 128×128 PNG.
-- **Cover art** — 1920×960 PNG (Figma Community cover).
-- You're a designer — these are quick in Figma; or ask and I'll draft SVGs to export.
+- `icon.png`: 128×128.
+- `cover.png`: 1920×960, built from `cover.html` over the product poster.
+- `carousel/`: five 2560×1600 images, in listing order.
 
 ## 6. Publish steps (in the Figma app — your account)
 

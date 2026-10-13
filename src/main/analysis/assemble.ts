@@ -54,14 +54,14 @@ function resolveScreen(
  *   • buildScreens runs on UNSORTED issues (screen.issueIds keep push order)
  *   • buildRootCauses / buildSummary run on SORTED issues
  */
-export function assembleReport(issues: Issue[], metadata: ReportMetadata): Report {
-  const instanceCounts = buildInstanceCountMap();
+export async function assembleReport(issues: Issue[], metadata: ReportMetadata): Promise<Report> {
+  const instanceCounts = await buildInstanceCountMap();
 
   for (const issue of issues) {
-    const node = figma.getNodeById(issue.nodeId);
+    const node = await figma.getNodeByIdAsync(issue.nodeId);
     if (node) {
       // Attach component context so the UI can offer "Go To Component".
-      const component = getComponentInfo(node, instanceCounts);
+      const component = await getComponentInfo(node, instanceCounts);
       if (component) {
         issue.componentId = component.componentId;
         issue.componentName = component.componentName;

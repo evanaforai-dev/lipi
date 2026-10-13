@@ -1,14 +1,16 @@
 import type { Language } from "../../shared/translate";
 
-// Provider-based translation. Demo (no key, deterministic) is the default so the plugin
-// runs immediately after cloning; Google stays available as an optional production
-// provider behind the selector. The network lives ONLY in the Google provider.
+// Provider-based translation. Free (no key, real machine translation via MyMemory) is the
+// default, so a designer gets real Hindi or Tamil without setting anything up. Demo stays
+// fully offline and deterministic; Google stays available for teams with their own key.
 
-export type ProviderId = "demo" | "google";
+export type ProviderId = "free" | "demo" | "google";
 
 export interface TranslateOutcome {
   map: Record<string, string>; // source → target (English kept on any failure)
   failed: number;
+  /** Strings that got script-correct placeholder text instead of a real translation. */
+  approximated?: number;
 }
 
 export interface TranslationProvider {
@@ -231,7 +233,7 @@ function expand(source: string, lang: Language): string {
 
 export const DEMO_PROVIDER: TranslationProvider = {
   id: "demo",
-  label: "Demo",
+  label: "Offline",
   requiresKey: false,
   async translate(strings, language) {
     const dict = DEMO_DICT[language] ?? {};
@@ -300,8 +302,96 @@ export const GOOGLE_PROVIDER: TranslationProvider = {
   },
 };
 
-export const PROVIDERS: TranslationProvider[] = [DEMO_PROVIDER, GOOGLE_PROVIDER];
+// ── Free provider — real translation, no key, no setup ──────────────────────
+// MyMemory's public API: anonymous, CORS-open, about 5,000 characters a day per user.
+// Order per string: curated dictionary, then session cache, then MyMemory. A string the
+// network cannot translate (quota spent, offline, too long, wrong script back) falls back
+// to script-correct placeholder text, so the layout test always runs to the end.
+const MYMEMORY = "https://api.mymemory.translated.net/get";
+const MYMEMORY_MAX_BYTES = 450; // the API rejects queries over 500 bytes
+const CONCURRENCY = 4;
+const SCRIPT_RANGE: Record<Language, RegExp> = {
+  hi: /[\u0900-\u097F]/,
+  ta: /[\u0B80-\u0BFF]/,
+};
+
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
+}
+
+class QuotaSpent extends Error {}
+
+async function myMemory(source: string, language: Language): Promise<string | null> {
+  const url = `${MYMEMORY}?q=${encodeURIComponent(source)}&langpair=en|${language}`;
+  const res = await fetch(url);
+  if (res.status === 429) throw new QuotaSpent();
+  if (!res.ok) return null;
+  const data = await res.json();
+  if (data?.quotaFinished) throw new QuotaSpent();
+  if (Number(data?.responseStatus) !== 200) return null;
+  const text = decodeEntities(String(data?.responseData?.translatedText ?? "")).trim();
+  // Translation memories sometimes answer in the wrong script, or echo the English back.
+  // Either one would hide exactly the pressure this plugin exists to find.
+  if (!text || !SCRIPT_RANGE[language].test(text)) return null;
+  return text;
+}
+
+export const FREE_PROVIDER: TranslationProvider = {
+  id: "free",
+  label: "Free",
+  requiresKey: false,
+  async translate(strings, language) {
+    const dict = DEMO_DICT[language] ?? {};
+    const map: Record<string, string> = {};
+    const misses: string[] = [];
+    for (const s of strings) {
+      const curated = dict[s.trim().toLowerCase()];
+      const cached = sessionCache.get(`${language}::${s}`);
+      if (curated !== undefined) map[s] = curated;
+      else if (cached !== undefined) map[s] = cached;
+      else if (!/[A-Za-z]/.test(s)) map[s] = s; // numbers, prices, symbols: nothing to translate
+      else misses.push(s);
+    }
+
+    let approximated = 0;
+    let quotaSpent = false;
+    const approximate = (s: string) => {
+      map[s] = expand(s, language);
+      approximated++;
+    };
+    let cursor = 0;
+    const worker = async () => {
+      while (cursor < misses.length) {
+        const s = misses[cursor++];
+        if (quotaSpent || new TextEncoder().encode(s).length > MYMEMORY_MAX_BYTES) {
+          approximate(s);
+          continue;
+        }
+        try {
+          const t = await myMemory(s, language);
+          if (t) {
+            map[s] = t;
+            sessionCache.set(`${language}::${s}`, t);
+          } else approximate(s);
+        } catch (e) {
+          if (e instanceof QuotaSpent) quotaSpent = true;
+          approximate(s);
+        }
+      }
+    };
+    await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+    return { map, failed: 0, approximated };
+  },
+};
+
+export const PROVIDERS: TranslationProvider[] = [FREE_PROVIDER, DEMO_PROVIDER, GOOGLE_PROVIDER];
 
 export function getProvider(id: ProviderId): TranslationProvider {
-  return PROVIDERS.find((p) => p.id === id) ?? DEMO_PROVIDER;
+  return PROVIDERS.find((p) => p.id === id) ?? FREE_PROVIDER;
 }

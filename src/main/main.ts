@@ -39,7 +39,7 @@ const translationsByLang: Partial<Record<Language, Record<string, string>>> = {}
 let lastRootIds: string[] = [];
 
 // Crash recovery: sweep any leftover preview artifacts before doing anything else.
-cleanupPreviewArtifacts();
+void cleanupPreviewArtifacts();
 figma.on("close", () => {
   if (isPreviewActive()) exitPreview();
 });
@@ -95,7 +95,7 @@ async function runAnalysis(
   removeClones(frames);
 
   post({ type: "STAGE", stage: "recommendations" });
-  const report = assembleReport(issues, {
+  const report = await assembleReport(issues, {
     scanId: `gen-${++genCounter}`,
     createdAt: Date.now(),
     scannedNodes: staticResult.scannedNodes,
@@ -184,8 +184,7 @@ figma.ui.onmessage = async (msg: UiToMain) => {
       // translations (no re-translate) so the delta reflects the new geometry. The diff shows
       // what got resolved, so the count visibly drops.
       try {
-        const roots = lastRootIds
-          .map((id) => figma.getNodeById(id))
+        const roots = (await Promise.all(lastRootIds.map((id) => figma.getNodeByIdAsync(id))))
           .filter(
             (n): n is SceneNode =>
               !!n && !n.removed && n.type !== "PAGE" && n.type !== "DOCUMENT",
@@ -258,7 +257,7 @@ figma.ui.onmessage = async (msg: UiToMain) => {
         exitPreview();
         post({ type: "PREVIEW_STATE", active: false, language: null });
       }
-      const count = reveal(msg.checkId, msg.nodeIds);
+      const count = await reveal(msg.checkId, msg.nodeIds);
       post({ type: "REVEAL_STATE", active: count > 0, count, checkId: msg.checkId });
       break;
     }
@@ -276,13 +275,11 @@ figma.ui.onmessage = async (msg: UiToMain) => {
       // posted; selecting an off-page node throws, and a thrown handler posts nothing.
       let found = false;
       try {
-        let node: BaseNode | null = figma.getNodeById(msg.componentId);
-        if (!node && "getNodeByIdAsync" in figma) {
-          try {
-            node = await figma.getNodeByIdAsync(msg.componentId);
-          } catch {
-            node = null;
-          }
+        let node: BaseNode | null;
+        try {
+          node = await figma.getNodeByIdAsync(msg.componentId);
+        } catch {
+          node = null;
         }
         const isComp =
           !!node && !node.removed && (node.type === "COMPONENT" || node.type === "COMPONENT_SET");
@@ -290,7 +287,7 @@ figma.ui.onmessage = async (msg: UiToMain) => {
         // Remote components are published from another file — there's nowhere to jump to here.
         if (comp && comp.remote !== true) {
           const page = pageOf(comp);
-          if (page && page !== figma.currentPage) figma.currentPage = page;
+          if (page && page !== figma.currentPage) await figma.setCurrentPageAsync(page);
           // Only select/zoom if it truly lives on the current page now (else selection throws).
           if (pageOf(comp) === figma.currentPage) {
             figma.currentPage.selection = [comp];
@@ -309,13 +306,13 @@ figma.ui.onmessage = async (msg: UiToMain) => {
       if (isPreviewActive()) {
         // Jump to the clone on the current page (locked group → zoom only, no select).
         const cloneId = await previewNode(msg.nodeId);
-        const node = cloneId ? figma.getNodeById(cloneId) : null;
+        const node = cloneId ? await figma.getNodeByIdAsync(cloneId) : null;
         const found = !!node && !node.removed && node.type !== "PAGE" && node.type !== "DOCUMENT";
         if (found) figma.viewport.scrollAndZoomIntoView([node as SceneNode]);
         post({ type: "SELECT_RESULT", nodeId: msg.nodeId, found });
         break;
       }
-      const node = figma.getNodeById(msg.nodeId);
+      const node = await figma.getNodeByIdAsync(msg.nodeId);
       const found =
         !!node &&
         !node.removed &&
@@ -326,7 +323,7 @@ figma.ui.onmessage = async (msg: UiToMain) => {
         const sceneNode = node as SceneNode;
         // Only select nodes on the active page — switch pages first if needed.
         const page = pageOf(sceneNode);
-        if (page && page !== figma.currentPage) figma.currentPage = page;
+        if (page && page !== figma.currentPage) await figma.setCurrentPageAsync(page);
         figma.currentPage.selection = [sceneNode];
         figma.viewport.scrollAndZoomIntoView([sceneNode]);
       }

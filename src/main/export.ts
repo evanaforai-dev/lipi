@@ -9,8 +9,7 @@ export async function exportLocalized(
   translations: Record<string, string>,
   language: Language,
 ): Promise<number> {
-  const originals = rootIds
-    .map((id) => figma.getNodeById(id))
+  const originals = (await Promise.all(rootIds.map((id) => figma.getNodeByIdAsync(id))))
     .filter(
       (n): n is SceneNode =>
         !!n && !n.removed && n.type !== "PAGE" && n.type !== "DOCUMENT",

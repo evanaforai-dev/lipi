@@ -54,8 +54,8 @@ export function App() {
   // Start on "boot" until clientStorage tells us whether onboarding has been seen.
   const [phase, setPhase] = useState<Phase>("boot");
   const [onboarded, setOnboarded] = useState(false);
-  // Demo is the default so the plugin runs immediately after cloning — no API key needed.
-  const [providerId, setProviderId] = useState<ProviderId>("demo");
+  // Free is the default: real translation with no key and no setup.
+  const [providerId, setProviderId] = useState<ProviderId>("free");
   const [key, setKey] = useState<string | null>(null);
   const [genError, setGenError] = useState<{ title: string; message: string } | null>(null);
   const [stageStatus, setStageStatus] = useState<Record<Stage, StageState>>(emptyStages());
@@ -77,6 +77,8 @@ export function App() {
   // Languages still to run through the pipeline this analysis (order = selection order).
   const genQueue = useRef<Language[]>([]);
   const genStrings = useRef<string[]>([]);
+  // Strings the free provider could not translate this run (quota spent, offline).
+  const approximatedCount = useRef(0);
 
   // Derived from the active language — the rest of the UI reads these as before.
   const active = activeLang ? reports[activeLang] : undefined;
@@ -129,6 +131,15 @@ export function App() {
           setActiveLang(first);
           setPreviewLang(first); // preview-as-default; PREVIEW_STATE confirms
           send({ type: "PREVIEW_ENTER", language: first });
+          const approx = approximatedCount.current;
+          if (approx > 0) {
+            setBanner({
+              icon: <EyeIcon size={16} />,
+              title: `${approx} string${approx === 1 ? "" : "s"} approximated`,
+              message:
+                "The free translator was unavailable or out of today's quota, so these use placeholder text in the right script. Length and line pressure are still tested.",
+            });
+          }
         }
         break;
       }
@@ -215,6 +226,7 @@ export function App() {
     setActiveLang(null);
     setPreviewLang(null);
     genQueue.current = [...selectedLangs];
+    approximatedCount.current = 0;
     setStageStatus(stagesUpTo("prepare"));
     setPhase("generating");
     send({ type: "PREPARE", language: selectedLangs[0] });
@@ -231,7 +243,8 @@ export function App() {
       return;
     }
     setStageStatus(stagesUpTo("translating"));
-    const { map } = await provider.translate(genStrings.current, lang, key ?? "");
+    const { map, approximated } = await provider.translate(genStrings.current, lang, key ?? "");
+    approximatedCount.current += approximated ?? 0;
     send({ type: "GENERATE", language: lang, translations: map });
   };
 
