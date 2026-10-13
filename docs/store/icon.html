@@ -1,0 +1,14 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@800&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;width:128px;height:128px;background:#000;overflow:hidden}
+.w{position:absolute;left:20px;top:46px;font-family:'Noto Sans Devanagari';font-weight:800;font-size:66px;line-height:1;white-space:nowrap}
+.a{color:#fff}.b{color:#4d4d4d}
+.line{position:absolute;top:40px;height:52px;border-left:3px dashed #fff}
+</style></head><body>
+<div class="w"><span class="a" id="a">लि</span><span class="b">पि</span></div>
+<div class="line" id="l"></div>
+<script>
+document.fonts.ready.then(()=>{const a=document.getElementById('a').getBoundingClientRect();
+document.getElementById('l').style.left=(a.right+1)+'px';document.body.dataset.ready=1});
+</script></body></html>

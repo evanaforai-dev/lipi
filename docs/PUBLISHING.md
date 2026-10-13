@@ -79,11 +79,12 @@ Paste the public URL of [`PRIVACY.md`](PRIVACY.md) into the listing's privacy fi
 
 ## 5. Assets
 
-All ready in `docs/store/`:
+All in `docs/store/`, each rendered from the HTML file beside it:
 
-- `icon.png`: 128×128.
-- `cover.png`: 1920×960, built from `cover.html` over the product poster.
-- `carousel/`: five 2560×1600 images, in listing order.
+- `icon.png`: 128×128. White लि inside a dashed boundary with a grey पि spilling past it:
+  localized text overflowing its container, in black and white.
+- `slides/thumbnail.png`: 1920×1080 listing thumbnail.
+- `slides/1-meet.png` to `slides/9-free.png`: the nine carousel images, in order.
 
 ## 6. Publish steps (in the Figma app — your account)
 
