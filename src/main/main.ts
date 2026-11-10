@@ -29,7 +29,8 @@ import { captureLayout, verifyCapture } from "./delta/snapshot";
 import { computeLayoutDelta, printDelta } from "./delta/compute";
 import { createPressureIssues, dedupeIssues, printPressure } from "./delta/adapter";
 
-const KEY_STORAGE = "gtranslate_key";
+// Earlier builds stored a user-supplied translation key here. Lipi no longer takes one.
+const LEGACY_KEY_STORAGE = "gtranslate_key";
 const ONBOARD_STORAGE = "onboarded";
 let genCounter = 0;
 // Verify Mode keeps the previous scan PER language (never persisted) so diffs never cross langs.
@@ -119,21 +120,14 @@ async function runAnalysis(
   return { report, strings };
 }
 
-// Surface any saved translation key + the onboarding flag to the UI on launch.
-figma.clientStorage
-  .getAsync(KEY_STORAGE)
-  .then((k) => post({ type: "KEY_STATE", key: (k as string) ?? null }));
+// Delete any key a previous build saved, then surface the onboarding flag to the UI.
+void figma.clientStorage.deleteAsync(LEGACY_KEY_STORAGE);
 figma.clientStorage
   .getAsync(ONBOARD_STORAGE)
   .then((v) => post({ type: "ONBOARD_STATE", onboarded: v === true }));
 
 figma.ui.onmessage = async (msg: UiToMain) => {
   switch (msg.type) {
-    case "SAVE_KEY":
-      await figma.clientStorage.setAsync(KEY_STORAGE, msg.key);
-      post({ type: "KEY_STATE", key: msg.key });
-      break;
-
     case "MARK_ONBOARDED":
       await figma.clientStorage.setAsync(ONBOARD_STORAGE, true);
       break;

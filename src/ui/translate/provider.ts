@@ -2,9 +2,9 @@ import type { Language } from "../../shared/translate";
 
 // Provider-based translation. Free (no key, real machine translation via MyMemory) is the
 // default, so a designer gets real Hindi or Tamil without setting anything up. Demo stays
-// fully offline and deterministic; Google stays available for teams with their own key.
+// fully offline and deterministic. Neither needs a key or an account.
 
-export type ProviderId = "free" | "demo" | "google";
+export type ProviderId = "free" | "demo";
 
 export interface TranslateOutcome {
   map: Record<string, string>; // source → target (English kept on any failure)
@@ -16,8 +16,7 @@ export interface TranslateOutcome {
 export interface TranslationProvider {
   id: ProviderId;
   label: string;
-  requiresKey: boolean;
-  translate: (strings: string[], language: Language, key: string) => Promise<TranslateOutcome>;
+  translate: (strings: string[], language: Language) => Promise<TranslateOutcome>;
 }
 
 // ── Demo provider — deterministic, offline, no key ──────────────────────────
@@ -234,7 +233,6 @@ function expand(source: string, lang: Language): string {
 export const DEMO_PROVIDER: TranslationProvider = {
   id: "demo",
   label: "Offline",
-  requiresKey: false,
   async translate(strings, language) {
     const dict = DEMO_DICT[language] ?? {};
     const map: Record<string, string> = {};
@@ -246,68 +244,14 @@ export const DEMO_PROVIDER: TranslationProvider = {
   },
 };
 
-// ── Google provider — production, requires an API key, uses the network ─────
-const ENDPOINT = "https://translation.googleapis.com/language/translate/v2";
-const BATCH_SIZE = 100;
-const sessionCache = new Map<string, string>();
-
-async function translateChunk(chunk: string[], language: Language, key: string): Promise<string[]> {
-  const res = await fetch(`${ENDPOINT}?key=${encodeURIComponent(key)}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ q: chunk, source: "en", target: language, format: "text" }),
-  });
-  if (!res.ok) throw new Error(`Translation request failed (${res.status})`);
-  const data = await res.json();
-  const translations = data?.data?.translations;
-  if (!Array.isArray(translations)) throw new Error("Unexpected translation response");
-  return translations.map((t: { translatedText?: string }) => t?.translatedText ?? "");
-}
-
-export const GOOGLE_PROVIDER: TranslationProvider = {
-  id: "google",
-  label: "Google",
-  requiresKey: true,
-  async translate(strings, language, key) {
-    const map: Record<string, string> = {};
-    const misses: string[] = [];
-    for (const s of strings) {
-      const cached = sessionCache.get(`${language}::${s}`);
-      if (cached !== undefined) map[s] = cached;
-      else misses.push(s);
-    }
-    let failed = 0;
-    for (let i = 0; i < misses.length; i += BATCH_SIZE) {
-      const chunk = misses.slice(i, i + BATCH_SIZE);
-      try {
-        const out = await translateChunk(chunk, language, key);
-        chunk.forEach((src, idx) => {
-          const t = out[idx];
-          if (t && t.length > 0) {
-            map[src] = t;
-            sessionCache.set(`${language}::${src}`, t);
-          } else {
-            map[src] = src;
-            failed++;
-          }
-        });
-      } catch {
-        for (const src of chunk) {
-          map[src] = src; // keep English on failure
-          failed++;
-        }
-      }
-    }
-    return { map, failed };
-  },
-};
-
 // ── Free provider — real translation, no key, no setup ──────────────────────
 // MyMemory's public API: anonymous, CORS-open, about 5,000 characters a day per user.
 // Order per string: curated dictionary, then session cache, then MyMemory. A string the
 // network cannot translate (quota spent, offline, too long, wrong script back) falls back
 // to script-correct placeholder text, so the layout test always runs to the end.
 const MYMEMORY = "https://api.mymemory.translated.net/get";
+// Per-session cache so Re-check and a second language reuse earlier translations.
+const sessionCache = new Map<string, string>();
 const MYMEMORY_MAX_BYTES = 450; // the API rejects queries over 500 bytes
 const CONCURRENCY = 4;
 const SCRIPT_RANGE: Record<Language, RegExp> = {
@@ -345,7 +289,6 @@ async function myMemory(source: string, language: Language): Promise<string | nu
 export const FREE_PROVIDER: TranslationProvider = {
   id: "free",
   label: "Free",
-  requiresKey: false,
   async translate(strings, language) {
     const dict = DEMO_DICT[language] ?? {};
     const map: Record<string, string> = {};
@@ -390,7 +333,7 @@ export const FREE_PROVIDER: TranslationProvider = {
   },
 };
 
-export const PROVIDERS: TranslationProvider[] = [FREE_PROVIDER, DEMO_PROVIDER, GOOGLE_PROVIDER];
+export const PROVIDERS: TranslationProvider[] = [FREE_PROVIDER, DEMO_PROVIDER];
 
 export function getProvider(id: ProviderId): TranslationProvider {
   return PROVIDERS.find((p) => p.id === id) ?? FREE_PROVIDER;

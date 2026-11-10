@@ -1,4 +1,3 @@
-import { useState } from "react";
 import type { Language } from "../../shared/translate";
 import { PROVIDERS, type ProviderId } from "../translate/provider";
 import { CheckboxIcon, RadioIcon } from "./icons";
@@ -13,27 +12,19 @@ const LANGS: { id: Language; label: string }[] = [
 export function GenerateView({
   selectedLangs,
   providerId,
-  keyRequired,
-  hasKey,
   error,
   onToggleLang,
   onSelectProvider,
-  onSaveKey,
   onGenerate,
 }: {
   selectedLangs: Language[];
   providerId: ProviderId;
-  keyRequired: boolean;
-  hasKey: boolean;
   error: { title: string; message: string } | null;
   onToggleLang: (id: Language) => void;
   onSelectProvider: (id: ProviderId) => void;
-  onSaveKey: (key: string) => void;
   onGenerate: () => void;
 }) {
-  const [keyDraft, setKeyDraft] = useState("");
-  const needsKey = keyRequired && !hasKey;
-  const blocked = needsKey || selectedLangs.length === 0;
+  const blocked = selectedLangs.length === 0;
 
   return (
     <div style={styles.root}>
@@ -82,26 +73,6 @@ export function GenerateView({
         </p>
       )}
 
-      {needsKey ? (
-        <div style={styles.keyBlock}>
-          <p style={styles.hint}>Add a Google Translation key to enable generation.</p>
-          <input
-            style={styles.input}
-            type="password"
-            placeholder="Paste key"
-            value={keyDraft}
-            onChange={(e) => setKeyDraft(e.target.value)}
-          />
-          <button
-            className="lpt-btn lpt-btn-secondary lpt-btn-sm"
-            style={{ alignSelf: "flex-start" }}
-            onClick={() => keyDraft.trim() && onSaveKey(keyDraft.trim())}
-          >
-            Save key
-          </button>
-        </div>
-      ) : null}
-
       {error && (
         <div style={styles.errorCard}>
           <span style={styles.errorIcon}>!</span>
@@ -133,7 +104,6 @@ export function GenerateView({
 const PROVIDER_NOTE: Record<ProviderId, string> = {
   free: "no key",
   demo: "offline",
-  google: "API key",
 };
 
 const FEEDBACK_URL =
@@ -158,16 +128,7 @@ const styles: Record<string, React.CSSProperties> = {
   langOff: { opacity: 0.4 },
   radio: { fontSize: 11 },
   soon: { marginLeft: "auto", fontSize: 10, opacity: 0.6, textTransform: "uppercase", letterSpacing: 0.4 },
-  keyBlock: { display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 },
   hint: { fontSize: 11, opacity: 0.7, margin: 0 },
-  input: {
-    fontSize: 12,
-    padding: "8px 12px",
-    borderRadius: 8,
-    border: "1px solid var(--figma-color-border, #ccc)",
-    background: "var(--figma-color-bg, #fff)",
-    color: "inherit",
-  },
   errorCard: {
     display: "flex",
     gap: 8,
