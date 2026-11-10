@@ -10,9 +10,8 @@
   "ui": "dist/index.html",
   "networkAccess": {
     "allowedDomains": [
-      "https://api.mymemory.translated.net",
-      "https://translation.googleapis.com"
+      "https://api.mymemory.translated.net"
     ],
-    "reasoning": "Free mode translates layer text with MyMemory's public API. Google mode is optional and uses the designer's own key."
+    "reasoning": "Free mode translates layer text with MyMemory's public API. No key or account is needed. Offline mode makes no network requests."
   }
 }

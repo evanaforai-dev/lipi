@@ -56,7 +56,6 @@ export function App() {
   const [onboarded, setOnboarded] = useState(false);
   // Free is the default: real translation with no key and no setup.
   const [providerId, setProviderId] = useState<ProviderId>("free");
-  const [key, setKey] = useState<string | null>(null);
   const [genError, setGenError] = useState<{ title: string; message: string } | null>(null);
   const [stageStatus, setStageStatus] = useState<Record<Stage, StageState>>(emptyStages());
   // Multi-language: each selected language keeps its own report; activeLang is the one on view.
@@ -97,9 +96,6 @@ export function App() {
 
   const { send } = usePluginBridge((msg: MainToUi) => {
     switch (msg.type) {
-      case "KEY_STATE":
-        setKey(msg.key);
-        break;
       case "ONBOARD_STATE":
         // Route out of the boot splash: first-time users see onboarding, returning users don't.
         setOnboarded(msg.onboarded);
@@ -205,8 +201,6 @@ export function App() {
   });
 
   // ── Generation flow ────────────────────────────────────────────────────────
-  const saveKey = (k: string) => send({ type: "SAVE_KEY", key: k });
-
   const toggleLang = (l: Language) =>
     setSelectedLangs((prev) => (prev.includes(l) ? prev.filter((x) => x !== l) : [...prev, l]));
 
@@ -237,13 +231,8 @@ export function App() {
     const lang = genQueue.current[0];
     if (!lang) return;
     const provider = getProvider(providerId);
-    if (provider.requiresKey && !key) {
-      setGenError({ title: "Translation key needed", message: "Add a translation key to run analysis." });
-      setPhase("generate");
-      return;
-    }
     setStageStatus(stagesUpTo("translating"));
-    const { map, approximated } = await provider.translate(genStrings.current, lang, key ?? "");
+    const { map, approximated } = await provider.translate(genStrings.current, lang);
     approximatedCount.current += approximated ?? 0;
     send({ type: "GENERATE", language: lang, translations: map });
   };
@@ -386,12 +375,9 @@ export function App() {
         <GenerateView
           selectedLangs={selectedLangs}
           providerId={providerId}
-          keyRequired={getProvider(providerId).requiresKey}
-          hasKey={!!key}
           error={genError}
           onToggleLang={toggleLang}
           onSelectProvider={setProviderId}
-          onSaveKey={saveKey}
           onGenerate={startGenerate}
         />
       </main>

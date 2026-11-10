@@ -6,7 +6,6 @@ import type { GenMeta, Language, Stage } from "./translate";
 
 // ── Messages sent FROM the UI TO the sandbox ────────────────────────────────
 export type UiToMain =
-  | { type: "SAVE_KEY"; key: string } // persist the translation key in clientStorage
   | { type: "PREPARE"; language: Language } // extract unique source strings from selection
   | { type: "GENERATE"; language: Language; translations: Record<string, string> }
   | { type: "RECHECK"; language: Language } // re-run on the same screens after fixes (cached translations)
@@ -21,7 +20,6 @@ export type UiToMain =
 
 // ── Messages sent FROM the sandbox TO the UI ────────────────────────────────
 export type MainToUi =
-  | { type: "KEY_STATE"; key: string | null }
   | { type: "ONBOARD_STATE"; onboarded: boolean } // whether onboarding has been completed
 
   | { type: "PREPARE_RESULT"; strings: string[]; textNodeCount: number; frameCount: number }

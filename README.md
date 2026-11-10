@@ -56,8 +56,8 @@ systemic fix can show where it occurs.
   that report. Regression scripts in `scripts/` cover the engine.
 - **Translation providers**: **Free** (default; real machine translation through
   MyMemory's public API, no key, about 5,000 characters a day, placeholder fallback past
-  that), **Offline** (curated dictionary plus script-correct placeholder text, no network)
-  and **Google Translate** (requires your own API key).
+  that) and **Offline** (curated dictionary plus script-correct placeholder text, no network).
+  Neither needs a key or an account.
 - **Dynamic page loading**: the manifest sets `documentAccess: "dynamic-page"`, which
   Figma requires for new plugins, so every node lookup is async.
   - The **Demo** provider ships a **curated bilingual dictionary** — 73 real
